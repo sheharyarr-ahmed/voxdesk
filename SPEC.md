@@ -349,7 +349,9 @@ One phase per session. Each ends at a gate. Do not proceed past a failed gate an
 
 ### Phase 0 · Bring up and verification sweep · 0 minutes
 
-`git init`, `git config core.hooksPath .githooks`, copy the blueprint to `docs/BLUEPRINT.md`, commit. Create the ElevenLabs account and agent. Write `agent/prompts/system.md` covering the qualification flow, tool sequencing, prompt injection defense using delimited user input, and refusal rules for anything outside the KB. Write `agent/knowledge/sherylabs.md` from defensible claims only, over 500 bytes so RAG indexes it. Run the §9 sweep and record all seven results in `.claude/decisions/`. Write `docs/CREDENTIALS.md`.
+**Repo bootstrap is already complete.** `git init`, `core.hooksPath`, `.gitignore`, `.githooks/commit-msg`, `LICENSE`, `README.md`, `.env.example`, `docs/BLUEPRINT.md`, and the public remote at `github.com/sheharyarr-ahmed/voxdesk` all exist as of commit `4bb160b`. Do not redo them.
+
+Create the ElevenLabs account and agent. Write `agent/prompts/system.md` covering the qualification flow, tool sequencing, prompt injection defense using delimited user input, and refusal rules for anything outside the KB. Write `agent/knowledge/sherylabs.md` from defensible claims only, over 500 bytes so RAG indexes it. Run the §9 sweep and record all seven results in `.claude/decisions/`. Write `docs/CREDENTIALS.md`.
 
 **Gate:** a text console conversation answers three service questions correctly from the KB, and all seven §9 checks are recorded as pass or as fallback taken.
 
