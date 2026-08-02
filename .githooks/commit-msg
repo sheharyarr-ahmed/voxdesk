@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Rejects attribution strings in commit messages. This repository has one author.
+# Enabled by: git config core.hooksPath .githooks
+set -euo pipefail
+
+msg_file="$1"
+pattern='co-authored-by|generated with|claude|anthropic|copilot|chatgpt|openai'
+
+# Ignore comment lines, git appends its own commented template.
+if grep -v '^#' "$msg_file" | grep -Eiq "$pattern"; then
+  echo "commit-msg: rejected." >&2
+  echo "Attribution strings are not permitted in commit messages." >&2
+  echo "" >&2
+  echo "Offending lines:" >&2
+  grep -v '^#' "$msg_file" | grep -Ein "$pattern" >&2
+  exit 1
+fi
+
+exit 0
