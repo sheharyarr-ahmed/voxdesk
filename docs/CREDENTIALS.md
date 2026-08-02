@@ -55,7 +55,7 @@ Server only. Mints conversation tokens at `POST /api/session`, connection 2 of S
 3. Create a new key.
 4. **Keys are restricted by default.** Grant these scopes or calls fail with `401 missing_permissions` rather than a tier error:
    - **Agents**, read and write. Without it the token mint fails.
-   - **Webhooks**, write. Without it `POST /v1/workspace/webhooks` returns `401 missing_permissions: webhooks_write`. Needed for V1 and again in Phase 3.
+   - **Webhooks**. The dashboard exposes this as one toggle with two states, access or no access, rather than separate read and write. Set it to access. Without it `POST /v1/workspace/webhooks` returns `401 missing_permissions: webhooks_write`, while `GET` on the same path still returns 200, so the gap is easy to miss until a write fails. Needed for V1 and again in Phase 3.
 5. Copy the value once. It is not shown again.
 
 ```bash
@@ -171,16 +171,39 @@ Server only. Verifies the HMAC on the post call webhook before anything touches 
 
 Captured in Phase 3, once a stable production URL exists, because the webhook needs a real destination.
 
-1. elevenlabs.io/app/agents/settings, the workspace ElevenAgents settings page.
-2. Create the post call webhook pointing at `https://<production-domain>/api/webhooks/post-call`.
-3. **The secret is shown once at creation.** Copy it immediately.
+Two paths. Both were exercised against the free workspace during V1.
+
+**Dashboard.** elevenlabs.io/app/agents/settings, create the post call webhook pointing at `https://<production-domain>/api/webhooks/post-call`. The secret is shown once at creation. Copy it immediately.
+
+**API.** The create response returns the secret directly:
 
 ```bash
-sed -i '' '/^ELEVENLABS_WEBHOOK_SECRET=$/d' .env.local
-read -s K && echo "ELEVENLABS_WEBHOOK_SECRET=$K" >> .env.local
+curl -sS -X POST https://api.elevenlabs.io/v1/workspace/webhooks \
+  -H "xi-api-key: $ELEVENLABS_API_KEY" -H 'content-type: application/json' \
+  -d '{"settings":{"name":"voxdesk-post-call",
+       "webhook_url":"https://<production-domain>/api/webhooks/post-call",
+       "auth_type":"hmac"}}' \
+| python3 -c 'import sys,json;print("ELEVENLABS_WEBHOOK_SECRET="+json.load(sys.stdin)["webhook_secret"])' \
+>> .env.local
 ```
 
-Also add it to the Vercel project environment, or the deployed route rejects every delivery.
+The three fields nest under `settings`, not at the top level. Getting that wrong returns 422, not 401.
+
+**Run that command yourself.** Piping straight into `.env.local` is deliberate: the value never reaches a terminal, a scrollback buffer, or an agent session transcript. If an agent runs it, the secret lands in a tool result, and the handover rule at the top of this document exists precisely to prevent that. Any masking applied to a response body must key on the exact field name, which here is `webhook_secret` and not `secret`.
+
+Shape: `wsec_` followed by 64 hex characters, 69 total.
+
+Then point the workspace at it, which is a separate step. Creating the webhook leaves `webhooks.post_call_webhook_id` null and no deliveries fire until it is set:
+
+```bash
+curl -sS -X PATCH https://api.elevenlabs.io/v1/convai/settings \
+  -H "xi-api-key: $ELEVENLABS_API_KEY" -H 'content-type: application/json' \
+  -d '{"webhooks":{"post_call_webhook_id":"<webhook_id from the create response>"}}'
+```
+
+Defaults observed on this workspace, which suit VoxDesk without change: `events: ["transcript"]`, `transcript_format: "json"`, `send_audio: false`. Audio stays off. There is no use for stored voice recordings here and it keeps the payload small.
+
+Also add the secret to the Vercel project environment, or the deployed route rejects every delivery.
 
 Header format is `ElevenLabs-Signature: t=<unix>,v0=<hex>`. The signed string is `${t}.${rawBody}`, HMAC-SHA256, hex digest, secret used raw, compared with `timingSafeEqual`, timestamp tolerance 1800s. Multiple `v0=` values may appear and any match accepts.
 
