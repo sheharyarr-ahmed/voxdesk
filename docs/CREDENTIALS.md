@@ -1,0 +1,207 @@
+# Credentials
+
+Capture guide for every secret VoxDesk needs. Written in Phase 0 and kept current as each one is captured.
+
+`.env.example` lists every name with empty values and is the only tracked env file. `.env.local` holds the real values and is gitignored. `src/lib/env.ts` Zod parses `process.env` at import from Phase 1 onward, so a missing or malformed variable fails at boot rather than mid call.
+
+## The handover rule, non negotiable
+
+Per SPEC.md §7, a secret value is never typed into an agent session and never appears in a tool result. At each blocking point the session prints the capture guide and the variable name, then stops. You write the value yourself. The session then verifies presence and shape only, and prints a masked form.
+
+```
+me:  ELEVENLABS_API_KEY is needed now. <capture guide>
+     ! read -s K && echo "ELEVENLABS_API_KEY=$K" >> .env.local
+you: done
+me:  ELEVENLABS_API_KEY  sk_...9f2c  ok (51 chars)
+```
+
+Appending to `.env.local` when an empty placeholder line for the same name already exists leaves two assignments. `set -a && . ./.env.local` takes the last one, so a trailing empty line silently blanks the value. Delete the placeholder first:
+
+```bash
+sed -i '' '/^VARIABLE_NAME=$/d' .env.local
+```
+
+## Count
+
+SPEC.md §7 says "all nine secrets" while its own table lists ten rows. This document covers all ten, plus the two tunables that are not secrets. The discrepancy is recorded here rather than silently resolved in one direction.
+
+## Order of first need
+
+| Phase | Variable | Secret | Status |
+|---|---|---|---|
+| 0 | `ELEVENLABS_API_KEY` | yes | captured |
+| 0 | `ELEVENLABS_AGENT_ID` | no, an identifier | captured |
+| 0 | `CAL_API_KEY` | yes | pending, needed for V4 and V6 |
+| 0 | `CAL_EVENT_TYPE_ID` | no, an identifier | pending, needed for V4 and V6 |
+| 1 | `DATABASE_URL` | yes | pending |
+| 1 | `DIRECT_URL` | yes | pending |
+| 1 | `TOOL_SHARED_SECRET` | yes | pending |
+| 1 | `SESSION_SECRET` | yes | pending |
+| 1 | `DEMO_PASSCODE` | yes | pending |
+| 3 | `ELEVENLABS_WEBHOOK_SECRET` | yes | pending |
+| any | `DAILY_SESSION_CAP` | no, a tunable | default 6 |
+| any | `DEFAULT_TIMEZONE` | no, a tunable | default Asia/Karachi |
+
+SPEC.md §7 places `CAL_API_KEY` and `CAL_EVENT_TYPE_ID` at Phase 1. They are listed at Phase 0 here because V4 and V6 are blocking Phase 0 checks that cannot run without them. This table is the corrected order of first need.
+
+---
+
+## 1 · `ELEVENLABS_API_KEY`
+
+Server only. Mints conversation tokens at `POST /api/session`, connection 2 of SPEC.md §2. Never reaches the client and never appears in a `NEXT_PUBLIC_` variable.
+
+1. Sign in at elevenlabs.io.
+2. Avatar menu, bottom left, then API Keys. Direct path: `elevenlabs.io/app/settings/api-keys`.
+3. Create a new key.
+4. **Keys are restricted by default.** Grant these scopes or calls fail with `401 missing_permissions` rather than a tier error:
+   - **Agents**, read and write. Without it the token mint fails.
+   - **Webhooks**, write. Without it `POST /v1/workspace/webhooks` returns `401 missing_permissions: webhooks_write`. Needed for V1 and again in Phase 3.
+5. Copy the value once. It is not shown again.
+
+```bash
+sed -i '' '/^ELEVENLABS_API_KEY=$/d' .env.local
+read -s K && echo "ELEVENLABS_API_KEY=$K" >> .env.local
+```
+
+Shape: begins `sk_`, 51 characters.
+
+Verify:
+```bash
+curl -sS -H "xi-api-key: $ELEVENLABS_API_KEY" https://api.elevenlabs.io/v1/user/subscription | jq .tier
+```
+
+## 2 · `ELEVENLABS_AGENT_ID`
+
+Not a secret, but environment specific. Identifies the agent the token is minted against.
+
+Either created by the first `pnpm agent:push` in Phase 2, or read from the agent page URL at `elevenlabs.io/app/agents/<this>`.
+
+Shape: begins `agent_`, 34 characters.
+
+## 3 · `CAL_API_KEY`
+
+Server only. Reads availability and creates real bookings, the SPEC.md §4.1 tool contracts.
+
+1. Sign in at app.cal.com. The free plan is sufficient.
+2. Settings, Developer, API keys.
+3. Add a key. Set expiry to **Never Expires**, otherwise the demo breaks silently on the expiry date.
+4. Copy the value once.
+
+```bash
+sed -i '' '/^CAL_API_KEY=$/d' .env.local
+read -s K && echo "CAL_API_KEY=$K" >> .env.local
+```
+
+Shape: begins `cal_`.
+
+## 4 · `CAL_EVENT_TYPE_ID`
+
+Not a secret. The numeric id of the event type the agent books into.
+
+1. app.cal.com, Event Types.
+2. Create the discovery call event type if it does not exist. Keep the duration short, 15 or 30 minutes, so a test booking is cheap to cancel.
+3. Open it for editing. The id is the number in the URL: `app.cal.com/event-types/<THIS>`.
+
+```bash
+sed -i '' '/^CAL_EVENT_TYPE_ID=$/d' .env.local
+read -p "event type id: " E && echo "CAL_EVENT_TYPE_ID=$E" >> .env.local
+```
+
+Shape: digits only.
+
+## 5 · `DATABASE_URL`
+
+Server only. Runtime connection, used by `src/lib/db/client.ts` with `postgres(url, { prepare: false })`.
+
+1. supabase.com, new project. Free tier. Set a database password and keep it.
+2. Connect button, top of the project page.
+3. Take the **Transaction pooler** string, **port 6543**.
+4. Substitute the real password for the placeholder in the string.
+
+Not the anon key and not the service role key. Per SPEC.md §6.9 deviation 1, VoxDesk ships no Supabase keys at all. Every read and write is server side over a connection string, and RLS stays enabled with no permissive policies.
+
+Shape: `postgresql://postgres.<ref>:<password>@<host>:6543/postgres`.
+
+## 6 · `DIRECT_URL`
+
+Server only, migrations only. `drizzle.config.ts` points here because the transaction pooler on 6543 does not support prepared statements or DDL.
+
+Same Supabase Connect panel, **Session pooler**, **port 5432**.
+
+Shape: `postgresql://postgres.<ref>:<password>@<host>:5432/postgres`.
+
+## 7 · `TOOL_SHARED_SECRET`
+
+Server only. The `x-vd-tool-secret` header ElevenLabs sends to both tool routes so they are not open endpoints. Generated locally, so there is no dashboard to visit.
+
+```bash
+sed -i '' '/^TOOL_SHARED_SECRET=$/d' .env.local
+echo "TOOL_SHARED_SECRET=$(openssl rand -hex 32)" >> .env.local
+```
+
+The same value is stored as an ElevenLabs workspace secret and referenced from both tool definitions as `{{TOOL_SHARED_SECRET}}`. V2 confirmed the API accepts a shared secret in `api_schema.request_headers`.
+
+Shape: 64 hex characters.
+
+## 8 · `SESSION_SECRET`
+
+Server only. HMAC key for the passcode session cookie, SPEC.md §6.1.
+
+```bash
+sed -i '' '/^SESSION_SECRET=$/d' .env.local
+echo "SESSION_SECRET=$(openssl rand -hex 32)" >> .env.local
+```
+
+Shape: 64 hex characters. Rotating it invalidates every live session, which is the intended emergency lever.
+
+## 9 · `DEMO_PASSCODE`
+
+Server only. Compared with `timingSafeEqual` in the `/gate` server action. Chosen by you, spoken on a vetting call, never committed.
+
+```bash
+sed -i '' '/^DEMO_PASSCODE=$/d' .env.local
+read -s K && echo "DEMO_PASSCODE=$K" >> .env.local
+```
+
+Make it pronounceable. You will be reading it to someone over a call.
+
+## 10 · `ELEVENLABS_WEBHOOK_SECRET`
+
+Server only. Verifies the HMAC on the post call webhook before anything touches the database, SPEC.md §6.6.
+
+Captured in Phase 3, once a stable production URL exists, because the webhook needs a real destination.
+
+1. elevenlabs.io/app/agents/settings, the workspace ElevenAgents settings page.
+2. Create the post call webhook pointing at `https://<production-domain>/api/webhooks/post-call`.
+3. **The secret is shown once at creation.** Copy it immediately.
+
+```bash
+sed -i '' '/^ELEVENLABS_WEBHOOK_SECRET=$/d' .env.local
+read -s K && echo "ELEVENLABS_WEBHOOK_SECRET=$K" >> .env.local
+```
+
+Also add it to the Vercel project environment, or the deployed route rejects every delivery.
+
+Header format is `ElevenLabs-Signature: t=<unix>,v0=<hex>`. The signed string is `${t}.${rawBody}`, HMAC-SHA256, hex digest, secret used raw, compared with `timingSafeEqual`, timestamp tolerance 1800s. Multiple `v0=` values may appear and any match accepts.
+
+## 11 · `DAILY_SESSION_CAP`
+
+Not a secret. Voice sessions permitted per 24 hours before `POST /api/session` returns 429, counted in the `demo_sessions` table. Default `6`. The counter lives in Postgres because a serverless in memory counter does not survive a cold start.
+
+## 12 · `DEFAULT_TIMEZONE`
+
+Not a secret. Used only when a browser reports a timezone that fails validation against `Intl.supportedValuesOf('timeZone')`. Default `Asia/Karachi`.
+
+---
+
+## Deployment
+
+Every server variable above is set again in the Vercel project environment. `.env.local` covers local development only. `DIRECT_URL` is needed in CI or locally for migrations but not by the running application.
+
+## If a secret leaks
+
+1. Rotate at the source first, then update `.env.local` and Vercel.
+2. `ELEVENLABS_API_KEY`: revoke the key in the dashboard. Voice minutes are the exposure.
+3. `TOOL_SHARED_SECRET`: regenerate, update the ElevenLabs workspace secret, redeploy. Until all three agree, tool calls return 401 and the agent reads its failure line, which degrades honestly rather than breaking.
+4. `DEMO_PASSCODE` or `SESSION_SECRET`: rotating `SESSION_SECRET` invalidates every live session immediately and is the faster lever.
+5. Database URLs: rotate the database password in Supabase, which changes both strings at once.
