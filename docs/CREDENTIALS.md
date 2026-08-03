@@ -31,8 +31,8 @@ SPEC.md §7 says "all nine secrets" while its own table lists ten rows. This doc
 |---|---|---|---|
 | 0 | `ELEVENLABS_API_KEY` | yes | captured |
 | 0 | `ELEVENLABS_AGENT_ID` | no, an identifier | captured |
-| 0 | `CAL_API_KEY` | yes | pending, needed for V4 and V6 |
-| 0 | `CAL_EVENT_TYPE_ID` | no, an identifier | pending, needed for V4 and V6 |
+| 0 | `CAL_API_KEY` | yes | captured, not yet exercised, see below |
+| 0 | `CAL_EVENT_TYPE_ID` | no, an identifier | captured |
 | 1 | `DATABASE_URL` | yes | pending |
 | 1 | `DIRECT_URL` | yes | pending |
 | 1 | `TOOL_SHARED_SECRET` | yes | pending |
@@ -93,6 +93,8 @@ read -s K && echo "CAL_API_KEY=$K" >> .env.local
 ```
 
 Shape: begins `cal_`.
+
+**This key has not been exercised against the API yet.** Cal.com's Cloudflare bot management challenges every request from the development machine with `cf-mitigated: challenge`, including the unauthenticated site root, so the key has never been evaluated. Full evidence in `.claude/decisions/v4-calcom-booking.md`. The first live call runs from the deployed Vercel function in Phase 1, and that is the point at which this key is confirmed working.
 
 ## 4 · `CAL_EVENT_TYPE_ID`
 
