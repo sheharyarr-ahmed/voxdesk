@@ -120,12 +120,21 @@ Shape: digits only.
 
 Server only. Runtime connection, used by `src/lib/db/client.ts` with `postgres(url, { prepare: false })`.
 
-1. supabase.com, new project. Free tier. Set a database password and keep it.
+1. supabase.com, new project, named `voxdesk`. Free tier. Set a database password and save it to a password manager immediately, since it is embedded in both connection strings and is not shown again.
 2. Connect button, top of the project page.
 3. Take the **Transaction pooler** string, **port 6543**.
 4. Substitute the real password for the placeholder in the string.
 
 Not the anon key and not the service role key. Per SPEC.md §6.9 deviation 1, VoxDesk ships no Supabase keys at all. Every read and write is server side over a connection string, and RLS stays enabled with no permissive policies.
+
+Project setup decisions, made once at creation:
+
+- **Region matches the Vercel function region**, not the developer's location. Vercel Hobby usually lands in Washington DC, `iad1`, so East US, North Virginia. The tool routes write `tool_invocations` inside the SPEC.md §6.2 3s budget, and a cross continent hop spends that budget for nothing. No query ever originates from a developer machine.
+- **Exposed schemas is emptied**, under Settings then API. That disables PostgREST entirely. Nothing here uses it, and an unused public surface is a liability with no upside. It is the logical completion of SPEC.md §6.9 deviation 1.
+- **No Auth provider is enabled.** SPEC.md §10 rules out Supabase Auth. The passcode gate is the only auth in this build.
+- **RLS is not automatic.** Drizzle creates tables without it, so migrations must carry `ALTER TABLE <t> ENABLE ROW LEVEL SECURITY;` for all five tables, with zero policies. No policy means no access for `anon` or `authenticated`, while the server still reaches the data as the owner over `DATABASE_URL`.
+
+**Operational trap: free projects pause after 7 days of inactivity.** A paused database fails the demo mid call, and a cold restore takes a minute or two. Wake it deliberately before any scheduled vetting call. This pairs with the 10 day RAG index retention recorded in the V7 decision record, so treat warming the demo as one pre call step covering both. Belongs in `docs/DEPLOY_CHECKLIST.md` at Phase 4.
 
 Shape: `postgresql://postgres.<ref>:<password>@<host>:6543/postgres`.
 
