@@ -94,7 +94,7 @@ read -s K && echo "CAL_API_KEY=$K" >> .env.local
 
 Shape: begins `cal_`.
 
-**This key has not been exercised against the API yet.** Cal.com's Cloudflare bot management challenges every request from the development machine with `cf-mitigated: challenge`, including the unauthenticated site root, so the key has never been evaluated. Full evidence in `.claude/decisions/v4-calcom-booking.md`. The first live call runs from the deployed Vercel function in Phase 1, and that is the point at which this key is confirmed working.
+**This key has not been exercised against the API yet.** Cal.com's Cloudflare bot management challenges every request from the development machine with `cf-mitigated: challenge`, including the unauthenticated site root, so the key has never been evaluated. Full evidence in the V4 decision record. The first live call runs from the deployed Vercel function in Phase 1, and that is the point at which this key is confirmed working.
 
 ## 4 · `CAL_EVENT_TYPE_ID`
 

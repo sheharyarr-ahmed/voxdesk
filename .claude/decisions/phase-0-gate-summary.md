@@ -55,6 +55,12 @@ Findings that constrain later work, each sourced from the record that produced i
 7. **RAG retention is 10 days on this workspace** and free tier indexed content is capped at 1MB. A demo left idle may need its index recomputed before a vetting call. Belongs in `docs/DEPLOY_CHECKLIST.md`. From V7.
 8. **Cal.com is unreachable from the development machine.** Vitest coverage of the Cal.com client mocks `fetch`. Live checks run against the deployed URL only. From V4.
 
+9. **`scripts/check-copy.sh` needs exactly one file exclusion, and it is `docs/BLUEPRINT.md`.** SPEC.md §11.1 specifies the script fails on the banned attribution strings across `README.md docs/ src/ agent/`. Running that scan today produces 11 matches, all of them in `docs/BLUEPRINT.md`, present since bootstrap commit `4bb160b`. They are legitimate: the blueprint names the tool the build runs in, refers to the repository's own dotted agent directory by path, and §10 quotes the banned list verbatim while defining the rule.
+
+   Exclude the file, not the strings. Token level exclusions would have to cover the tool name as prose, the directory path, and the quoted rule definition, which erodes the check until it stops catching what it exists to catch. The blueprint is a pre build source document rather than shipped copy, so excluding it whole is both correct and defensible.
+
+   Verified today: no other file in the scanned scope matches, and no em-dash appears anywhere in scope. Prose written from Phase 0 onward stays clear of the tokens so this exclusion never needs to grow. The `.githooks/commit-msg` hook enforces the same rule on commit messages and is confirmed working, having rejected one of this phase's own commit messages for quoting the directory path.
+
 ## Open item that affects the claims boundary
 
 `rag_retrieval_info` came back null on every turn of the simulated conversation, so it is established that the document is RAG indexed but not that retrieval fires at runtime rather than the platform inlining the document. Until a live conversation shows a retrieval with chunks, `docs/CLAIMS.md` should say the knowledge base is a controlled, RAG indexed document and should not assert that every answer was retrieved. Re testable at the Phase 2 gate. From V7.
