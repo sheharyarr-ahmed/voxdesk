@@ -355,6 +355,10 @@ Create the ElevenLabs account and agent. Write `agent/prompts/system.md` coverin
 
 **Gate:** a text console conversation answers three service questions correctly from the KB, and all seven §9 checks are recorded as pass or as fallback taken.
 
+**Phase 0 is complete as of commit `710e2ec`, 2026-08-03. Do not redo it.** Gate cleared: six checks pass, V5 partial, no fallback taken on any check, so nothing is owed in `docs/CLAIMS.md`. Full results and the reasoning behind each are in `.claude/decisions/`, with `phase-0-gate-summary.md` as the entry point. Read it before starting Phase 1. Agent `agent_1401kz0x1h1xfsk8x4vh5hxpjezg` carries the system prompt and a RAG indexed knowledge base document, `CgTt6RU8cZj1519ZGoUU`. Zero voice minutes consumed.
+
+Two items carry into Phase 1. **First, and blocking: confirm Cal.com serves Vercel's egress before building `src/lib/cal.ts`.** V4 established that Cloudflare scores the client fingerprint rather than the IP, so the usual assumption that datacenter traffic is fine does not hold here. Deploy one route calling `GET /v2/slots` and confirm 200 first. Second, V5's WebRTC handshake resolves at the Phase 2 gate, with `livekit-client` pinned to `2.16.1` in Phase 1 as the mitigation adopted up front.
+
 ### Phase 1 · Routes, Cal.com, persistence · 0 minutes
 
 Scaffold Next.js. Build `src/lib/{env,schemas,cal,verify-hmac,session-cookie,tool-log,slots}.ts`, the Drizzle schema and migrations, `/api/session`, `/api/tools/availability`, `/api/tools/book`, and the gate. Vitest across schemas, Cal.com client, HMAC verification, cookie signing, and slot formatting. Install `.claude/verify.sh` and `chmod +x`. Create the Vercel project and deploy, so tool URLs point at a stable production domain from the start.
