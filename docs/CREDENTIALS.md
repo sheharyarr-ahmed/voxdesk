@@ -94,7 +94,12 @@ read -s K && echo "CAL_API_KEY=$K" >> .env.local
 
 Shape: begins `cal_`.
 
-**This key has not been exercised against the API yet.** Cal.com's Cloudflare bot management challenges every request from the development machine with `cf-mitigated: challenge`, including the unauthenticated site root, so the key has never been evaluated. Full evidence in the V4 decision record. The first live call runs from the deployed Vercel function in Phase 1, and that is the point at which this key is confirmed working.
+**This key has not been exercised yet, and V4 passed without it.** `GET /v2/slots` and `POST /v2/bookings` are public for a public event type, so a real booking was created and cancelled with no `Authorization` header at all. `src/lib/cal.ts` should still send the key: relying on an endpoint staying public is relying on a policy that can tighten without notice, and the Phase 3 dashboard read path will need authenticated access regardless.
+
+Two operational notes from V4, both of which cost debugging time if unknown:
+
+- **The `cal-api-version` header is mandatory.** Without it the request returns `404 NotFoundException: Cannot GET /v2/slots`, which reads like a wrong URL rather than a missing header. Slots use `2024-09-04`; bookings and cancel use `2024-08-13`.
+- **curl cannot reach Cal.com from this machine.** Cloudflare scores the client fingerprint, so curl is challenged on every host and path while Chrome from the same IP passes. This is a local development constraint only. Unit tests mock `fetch`, and live checks run against the deployed URL.
 
 ## 4 · `CAL_EVENT_TYPE_ID`
 
