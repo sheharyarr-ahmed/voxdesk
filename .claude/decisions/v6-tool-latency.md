@@ -1,8 +1,8 @@
 # V6 · Tool round trip under 3s with Cal.com latency included
 
-**Date:** 2026-08-03
+**Date:** 2026-08-03, production number taken 2026-08-04
 **Phase:** 0, verification sweep, SPEC.md §9
-**Verdict:** PASS with a stated caveat. Measured on a worse network path than production, with a 4x margin.
+**Verdict:** **PASS, caveat discharged.** Measured at 4.1x margin from the development machine, then re measured from the deployed `iad1` function at **13.4x**. Both caveats below are now closed.
 
 Supersedes the earlier deferral in this file's history, which was written when Cal.com appeared unreachable.
 
@@ -45,14 +45,26 @@ SPEC.md §6.2 is built so latency is a tuning input rather than a load bearing a
 
 Plus the 60s module scope cache keyed by `${date}|${timezone}`, which absorbs the agent re checking availability inside one conversation. At a 384 ms p50 the cache is a courtesy rather than a necessity, which is a comfortable place to be.
 
-## Phase 1 re measurement
+## Phase 1 re measurement, taken 2026-08-04
 
-From the deployed function, not locally:
+Ten sequential `GET /v2/slots` from the deployed function in `iad1`, same event type `5725517`, three day window, `Asia/Karachi`. Full context in `phase-1-cal-egress-probe.md`.
 
-1. Ten sequential `GET /v2/slots` calls, p50 and p95.
-2. The same after cache warm, confirming the 60s cache returns without a network hop.
-3. End to end `POST /api/tools/availability`, which is what ElevenLabs actually experiences and is the only number that includes our own overhead.
+```
+samples (ms, sorted): 88, 89, 106, 109, 111, 115, 115, 116, 120, 187
 
-If upstream p95 exceeds 2500 ms there, the SPEC.md §9 fallback is to widen the cache window. Record that as the fallback taken rather than raising the abort, since raising it eats the 3s route budget.
+p50: 111 ms
+p95: 187 ms
+```
+
+| Path | p50 | p95 | margin on the 2500 ms abort |
+|---|---|---|---|
+| Rawalpindi laptop, 2026-08-03 | 384 ms | 609 ms | 4.1x |
+| `iad1` function, 2026-08-04 | **111 ms** | **187 ms** | **13.4x** |
+
+Against the 3s route budget the p95 margin is 16x. Caveat 1 is discharged: the laptop figure was a floor, and production is roughly three times faster on both percentiles, exactly as predicted. Caveat 2 is discharged by V4 closing, since Cal.com does serve Vercel's egress.
+
+**No fallback taken.** Upstream p95 is nowhere near 2500 ms, so the 60s cache window in SPEC.md §6.2 stays as written and nothing is owed in `docs/CLAIMS.md`.
+
+Two measurements from the original plan are deferred to the Phase 1 gate rather than skipped, because neither existed yet when this number was taken: the cache warm path returning without a network hop, which `tests/unit/slots.test.ts` asserts directly, and the end to end `POST /api/tools/availability` figure, which is the only number that includes our own overhead and is recorded from the SPEC.md §11.2 curl.
 
 Note the platform side ceiling from V2: `response_timeout_secs` has a minimum of 5 on ElevenLabs, so the tool definition declares 5 while our own budget stays 3. Not a conflict. The platform value is the outer bound before the agent gives up; ours is the promise the route keeps.

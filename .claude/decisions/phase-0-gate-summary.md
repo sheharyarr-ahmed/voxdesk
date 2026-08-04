@@ -16,9 +16,9 @@
 | V1 | Post call webhooks configurable on free | **PASS** | `v1-post-call-webhooks.md` |
 | V2 | Webhook tools available on free tier | **PASS** | `v2-webhook-tools-free-tier.md` |
 | V3 | Does text mode consume voice minutes | **PASS** | `v3-text-mode-minutes.md` |
-| V4 | Cal.com key issues, booking permitted | **PASS**, one half open | `v4-calcom-booking.md` |
+| V4 | Cal.com key issues, booking permitted | **PASS**, both halves closed 2026-08-04 | `v4-calcom-booking.md` |
 | V5 | WebRTC connects from the browser | **PARTIAL** | `v5-webrtc-connect.md` |
-| V6 | Tool round trip under 3s | **PASS**, with caveat | `v6-tool-latency.md` |
+| V6 | Tool round trip under 3s | **PASS**, caveat discharged 2026-08-04 | `v6-tool-latency.md` |
 | V7 | KB indexes with RAG over 500 bytes | **PASS** | `v7-rag-indexing.md` |
 
 **V5 is the single exception and it cannot be closed in Phase 0.** A real WebRTC handshake needs the browser SDK, which needs the Next.js scaffold Phase 1 creates. The token mint half was verified at zero cost, the `livekit-client` 2.16.1 pin is adopted up front rather than after a failure, and a failure would be a one line change inside the SPEC.md §6.7 adapter seam. Holding Phase 0 open for a check that Phase 0 structurally cannot run would not reduce any risk.
@@ -27,9 +27,9 @@
 
 Both are tracked in their own records. Neither blocks starting.
 
-**1. Will Cal.com serve Vercel's egress?** V4 established that Cloudflare scores the **client fingerprint**, not the IP: Chrome reached `api.cal.com` and created a real booking from the same network where curl is challenged on every host and path. That correction cuts against us. Vercel calls out through Node's undici, which is no more a browser fingerprint than curl's.
+**1. Will Cal.com serve Vercel's egress? CLOSED 2026-08-04. Yes.** V4 established that Cloudflare scores the **client fingerprint**, not the IP: Chrome reached `api.cal.com` and created a real booking from the same network where curl is challenged on every host and path. That correction cut against us, since Vercel calls out through Node's undici, which is no more a browser fingerprint than curl's.
 
-**Deploy one route calling `GET /v2/slots` and confirm 200 before building out `src/lib/cal.ts`.** This is the first Cal.com task in Phase 1, not a later one.
+Settled as the first Phase 1 task, before any of `src/lib/cal.ts`. A temporary route on the production alias returned **200** on `GET /v2/slots` both with and without the API key, and a **400 from Cal.com's own validator** on `POST /v2/bookings`, with no `cf-mitigated` header on any of the three. The `cf-ray` suffix was `-IAD`, not the `-ISB` edge that challenges this machine. No escalation was needed and the §9 fallback is not taken. Record: `phase-1-cal-egress-probe.md`.
 
 **2. Does RAG retrieval fire at runtime?** `rag_retrieval_info` was null on every simulated turn, so the document is proven **indexed** but not proven **retrieved** rather than inlined. Until a live Phase 2 conversation shows chunks, `docs/CLAIMS.md` says "controlled, RAG indexed document" and does not assert every answer was retrieved.
 
