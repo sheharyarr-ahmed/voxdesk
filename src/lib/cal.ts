@@ -1,8 +1,8 @@
 // Cal.com API v2 client.
 //
 // Wire format facts, all confirmed against the live API from the deployed
-// function on 2026-08-04. See .claude/decisions/phase-1-cal-egress-probe.md and
-// v4-calcom-booking.md.
+// function on 2026-08-04. Recorded in the decision notes phase-1-cal-egress-probe
+// and v4-calcom-booking.
 //
 //   - Header based versioning is mandatory. Without cal-api-version the request
 //     404s with "Cannot GET /v2/slots", which reads exactly like a wrong URL.
