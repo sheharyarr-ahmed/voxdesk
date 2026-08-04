@@ -33,12 +33,12 @@ SPEC.md §7 says "all nine secrets" while its own table lists ten rows. This doc
 | 0 | `ELEVENLABS_AGENT_ID` | no, an identifier | captured |
 | 0 | `CAL_API_KEY` | yes | captured, not yet exercised, see below |
 | 0 | `CAL_EVENT_TYPE_ID` | no, an identifier | captured |
-| 1 | `DATABASE_URL` | yes | pending |
-| 1 | `DIRECT_URL` | yes | pending |
-| 1 | `TOOL_SHARED_SECRET` | yes | pending |
-| 1 | `SESSION_SECRET` | yes | pending |
-| 1 | `DEMO_PASSCODE` | yes | pending |
-| 3 | `ELEVENLABS_WEBHOOK_SECRET` | yes | pending |
+| 1 | `DATABASE_URL` | yes | captured, connection verified |
+| 1 | `DIRECT_URL` | yes | captured, connection verified |
+| 1 | `TOOL_SHARED_SECRET` | yes | captured, generated locally |
+| 1 | `SESSION_SECRET` | yes | captured, generated locally |
+| 1 | `DEMO_PASSCODE` | yes | captured |
+| 3 | `ELEVENLABS_WEBHOOK_SECRET` | yes | pending, needs a deployed URL first |
 | any | `DAILY_SESSION_CAP` | no, a tunable | default 6 |
 | any | `DEFAULT_TIMEZONE` | no, a tunable | default Asia/Karachi |
 
@@ -124,6 +124,12 @@ Server only. Runtime connection, used by `src/lib/db/client.ts` with `postgres(u
 2. Connect button, top of the project page.
 3. Take the **Transaction pooler** string, **port 6543**.
 4. Substitute the real password for the placeholder in the string.
+
+**The one mistake that costs an hour.** Supabase prints the string as `...:[YOUR-PASSWORD]@...`. Replace the **brackets too**, not just the text between them. Leaving them produces a password of `[realpassword]`, which fails with `28P01 password authentication failed` and looks exactly like a wrong password rather than a formatting error. This happened during setup. Percent-encoding the brackets does not help, since it faithfully preserves a character that was never meant to be there.
+
+Related: if the password itself contains any of `@ : / ? # [ ]` it must be percent-encoded, because those are reserved in a URI. Simplest to avoid the problem entirely by resetting the password to letters and digits under Settings, Database, Reset database password.
+
+**Verify by connecting, not by reading.** Shape checks pass on a string that does not authenticate. The bracket bug survived three separate visual inspections and was caught only by an actual query.
 
 Not the anon key and not the service role key. Per SPEC.md §6.9 deviation 1, VoxDesk ships no Supabase keys at all. Every read and write is server side over a connection string, and RLS stays enabled with no permissive policies.
 
