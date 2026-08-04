@@ -104,8 +104,21 @@ const INVALID_SLOT_MARKERS = [
   'booking_not_allowed_by_restriction_schedule',
 ] as const;
 
-function classifyBookingFailure(status: number, rawBody: string): CalFailureKind {
-  const text = rawBody.toLowerCase();
+/**
+ * Classifies on the DECODED message, not the raw JSON.
+ *
+ * Cal.com's out of bounds message contains double quotes, and in the raw
+ * response body JSON has escaped those as \". Matching against the raw text
+ * therefore never fires for any marker containing a quote, and a real
+ * invalid_slot would be reported as upstream_error. rawBody is still appended as
+ * a fallback for the case where the envelope did not parse.
+ */
+function classifyBookingFailure(
+  status: number,
+  decodedMessage: string | null,
+  rawBody: string,
+): CalFailureKind {
+  const text = `${decodedMessage ?? ''}\n${rawBody}`.toLowerCase();
   if (SLOT_TAKEN_MARKERS.some((marker) => text.includes(marker))) return 'slot_taken';
   if (INVALID_SLOT_MARKERS.some((marker) => text.includes(marker))) return 'invalid_slot';
   if (status === 409) return 'slot_taken';
@@ -308,7 +321,7 @@ export async function createBooking(a: {
   if (status < 200 || status >= 300) {
     const { code, message } = readCalError(json, rawBody);
     throw new CalApiError({
-      kind: classifyBookingFailure(status, rawBody),
+      kind: classifyBookingFailure(status, message, rawBody),
       message: `Cal.com POST /v2/bookings returned ${status}`,
       status,
       calCode: code,
