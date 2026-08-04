@@ -119,10 +119,13 @@ export const TOOL_TIMEOUT: { [K in ToolName]: ToolFailure<K> } = {
     reason: 'upstream_timeout',
     speak: 'The calendar is slow to answer right now. Let me check again in a second.',
   },
+  // Never promises a clean retry. An aborted POST /v2/bookings can still have
+  // created the booking upstream, so inviting a retry invites a double booking.
   book_meeting: {
     ok: false,
     reason: 'upstream_timeout',
-    speak: 'The calendar is slow to answer right now. Let me confirm that booking again.',
+    speak:
+      'The calendar took longer than usual to confirm that. Let me check whether it went through before we try anything else.',
   },
 };
 

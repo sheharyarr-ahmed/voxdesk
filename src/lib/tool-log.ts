@@ -19,10 +19,28 @@ import {
 } from '@/lib/schemas';
 import { verifyToolSecret } from '@/lib/verify-hmac';
 
-// SPEC.md section 6.2 gives the route 3s and the Cal.com fetch 2500ms. This
-// backstop only fires when a handler hangs somewhere other than that fetch, and
-// it leaves roughly 200ms for the log write and serialisation.
-const HANDLER_BUDGET_MS = 2800;
+/**
+ * Per tool, because the two tools have genuinely different risk profiles.
+ *
+ * SPEC.md section 6.2 sets one 3s route budget for both. Measured from the
+ * deployed function against the live API: GET /v2/slots runs at a 187ms p95,
+ * while POST /v2/bookings runs at 2.1 to 2.5s because it writes a calendar
+ * event and sends invites. A single 2500ms abort therefore sits exactly on the
+ * booking failure boundary.
+ *
+ * That is worse than a slow answer. An aborted POST /v2/bookings still creates
+ * the booking upstream, verified on 2026-08-04: a request cut off at 2500ms
+ * left a real event on the calendar while the route reported upstream_timeout,
+ * so the agent would offer to retry and book a second slot.
+ *
+ * book_meeting therefore gets 4.5s, which stays inside the ElevenLabs platform
+ * minimum response_timeout_secs of 5. check_availability keeps the 3s budget it
+ * has 13x margin against. Deviation 13.
+ */
+const HANDLER_BUDGET_MS: Record<ToolName, number> = {
+  check_availability: 2800,
+  book_meeting: 4300,
+};
 
 const BUDGET_EXCEEDED = Symbol('tool.budget_exceeded');
 
@@ -158,7 +176,7 @@ export function withToolLogging<N extends ToolName, O extends ToolOutput<N> = To
       outcome = await Promise.race([
         handler(input.data as ToolInput<N>),
         new Promise<typeof BUDGET_EXCEEDED>((resolve) => {
-          timer = setTimeout(() => resolve(BUDGET_EXCEEDED), HANDLER_BUDGET_MS);
+          timer = setTimeout(() => resolve(BUDGET_EXCEEDED), HANDLER_BUDGET_MS[name]);
         }),
       ]);
     } catch (error) {
@@ -169,7 +187,7 @@ export function withToolLogging<N extends ToolName, O extends ToolOutput<N> = To
     }
 
     if (outcome === BUDGET_EXCEEDED) {
-      console.error(`[tool:${name}] handler exceeded ${HANDLER_BUDGET_MS}ms`);
+      console.error(`[tool:${name}] handler exceeded ${HANDLER_BUDGET_MS[name]}ms`);
       return finish(200, TOOL_TIMEOUT[name]);
     }
 

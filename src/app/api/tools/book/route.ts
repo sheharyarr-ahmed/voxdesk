@@ -14,7 +14,19 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 15;
 
-const UPSTREAM_TIMEOUT_MS = 2500;
+/**
+ * 4s, not the 2500ms check_availability uses.
+ *
+ * Measured against the live API from the deployed function on 2026-08-04:
+ * POST /v2/bookings takes 2.1 to 2.5s because it writes a calendar event and
+ * sends invites, so a 2500ms abort fires on roughly half of all bookings.
+ *
+ * The reason that is unacceptable rather than merely slow: an aborted request
+ * still creates the booking upstream. A run cut off at 2500ms left a real event
+ * on the calendar while this route reported upstream_timeout. Aborting the
+ * client does not roll back the server.
+ */
+const UPSTREAM_TIMEOUT_MS = 4000;
 
 /**
  * Records the booking alongside the conversation row. Uses the same upsert
@@ -126,10 +138,16 @@ export const POST = withToolLogging(
           };
         }
         if (error.kind === 'upstream_timeout') {
+          // Deliberately does not promise a clean retry. An aborted booking may
+          // still have landed on the calendar, so telling the visitor we will
+          // simply try again invites a double booking. This line sends the agent
+          // back to check_availability, where the slot disappearing is the
+          // evidence that the booking actually went through.
           return {
             ok: false,
             reason: 'upstream_timeout',
-            speak: 'The calendar is slow to answer right now. Let me confirm that booking again.',
+            speak:
+              'The calendar took longer than usual to confirm that. Let me check whether it went through before we try anything else.',
           };
         }
 
