@@ -154,7 +154,7 @@ Numbering continues from the Phase 2 gate record.
 | Database | 9 conversations, 1 completed with a transcript, 20 tool invocations, 5 bookings, 1 lead capture |
 | Credits | 1188 of 10000, unchanged, reset 2026-08-29 |
 | Brand | tokens and both fonts live in `globals.css` and `layout.tsx`. `/gate`, `/` and the console are unstyled and are phase 4's |
-| Open | the HMAC construction is still only verified against our own signer. One real delivery closes it |
+| Open | the HMAC construction is still only verified against our own signer. **Closes at the phase 4 gate, off the demo call, by the three step check above.** Decided rather than left hanging: not worth 230 credits now |
 | Open | V5, a token authorised WebRTC connect, still closes at the phase 4 gate |
 
 ## The circularity, and what closes it
@@ -173,11 +173,33 @@ not emit `post_call_transcription`, which is consistent with it emitting
 because it cost nothing; recorded because a future session would otherwise try it again.
 
 Nothing else free can close it. `simulate-conversation` creates no conversation record at
-all, agent test runs create none either, and both cost credits. The remaining options are a
-real spoken call, about 40 s and roughly 230 of the 1188 credits, or waiting for phase 4,
-which records a demo call anyway and therefore closes this for free.
+all, agent test runs create none either, and both cost credits. That left two options: a
+real spoken call now, about 40 s and roughly 230 of the 1188 remaining credits, or phase 4,
+which records a demo call regardless and therefore closes this at no extra cost.
+
+**Decided: phase 4 closes it.** Spending credits now would buy the same evidence phase 4
+produces for free, the risk is low because the construction matches the documentation, V1's
+record and eight passing unit tests, and phase 4 runs on a fresh 15 minutes after the
+2026-08-29 reset, so a failure discovered there has budget to absorb it. Buying certainty
+early is only worth it when the later check is expensive or unlikely to happen, and neither
+holds here.
+
+**This is therefore a phase 4 gate condition, not a note.** It sits alongside V5, which the
+phase 2 record already deferred to the same gate. Concretely, after the first spoken call
+of phase 4:
+
+1. `GET /v1/workspace/webhooks` and read `most_recent_failure_error_code`. A non null value
+   means the delivery reached us and was rejected, and the code says how.
+2. Confirm a `conversations` row for that call moved to `completed` with a transcript,
+   without any hand signed curl being involved.
+3. If it did not land, the Vercel function log for `/api/webhooks/post-call` carries the
+   exact reason string from `verifyElevenLabsSignature`, which is one of
+   `missing_header`, `malformed_timestamp`, `missing_signature`,
+   `timestamp_out_of_tolerance` or `signature_mismatch`. Those five distinguish a wrong
+   construction from a wrong secret from a clock problem without any guessing.
 
 Until it closes, the claim is stated narrowly: **signature verification is enforced and its
 failure modes are proven from outside, including a valid signature over a tampered body;
 the signing construction matches the documentation, V1's record and our own signer, and has
-not yet been confirmed against a payload ElevenLabs signed.**
+not yet been confirmed against a payload ElevenLabs signed.** `docs/CLAIMS.md`, written in
+phase 4, inherits that wording if the check has not run by then.
