@@ -27,19 +27,16 @@
 }
 
 /*
- * Not cosmetic. Without it the browser keeps rendering native controls for a light
- * page, so the passcode input on /gate becomes a dark field on a dark body and is
- * invisible. Declaring the scheme hands the browser the contrast rules for inputs,
- * buttons, scrollbars and the caret, which is the whole cost of moving the body to
- * true black before phase 4 styles those controls itself. Caught by screenshotting
- * the deployed gate, not by reading the diff.
+ * The surface treatment is deliberately NOT here. Putting background-color on body
+ * turned the whole site black, and Tailwind's preflight sets input backgrounds to
+ * transparent, so the passcode field on /gate became an invisible box on an
+ * invisible background. color-scheme: dark does not rescue it, because the
+ * transparency is an explicit rule rather than a browser default.
+ *
+ * So true black is applied by the two /calls pages, which own no form controls, and
+ * /gate and / keep the default surface until phase 4 styles them and their states
+ * properly. The typeface is global because a font swap has no contrast interaction.
  */
-:root {
-  color-scheme: dark;
-}
-
 body {
-  background-color: var(--color-ink);
-  color: var(--color-body);
   font-family: var(--font-display);
 }

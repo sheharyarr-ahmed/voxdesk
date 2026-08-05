@@ -50,55 +50,58 @@ export default async function CallsPage() {
   `);
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-16">
-      <header className="flex items-baseline justify-between border-b border-line pb-4">
-        <h1 className="font-mono text-xs uppercase tracking-[0.2em] text-faint">Call log</h1>
-        <p className="font-mono text-xs text-faint">
-          {rows.length} {rows.length === 1 ? 'call' : 'calls'}
-        </p>
-      </header>
+    // The surface lives on the page rather than on body. See src/app/globals.css.
+    <div className="min-h-screen bg-ink text-body [color-scheme:dark]">
+      <main className="mx-auto max-w-4xl px-6 py-16">
+        <header className="flex items-baseline justify-between border-b border-line pb-4">
+          <h1 className="font-mono text-xs uppercase tracking-[0.2em] text-faint">Call log</h1>
+          <p className="font-mono text-xs text-faint">
+            {rows.length} {rows.length === 1 ? 'call' : 'calls'}
+          </p>
+        </header>
 
-      {rows.length === 0 ? (
-        <p className="py-16 text-sm text-faint">No calls yet.</p>
-      ) : (
-        <ul>
-          {rows.map((row) => (
-            <li key={row.el_conversation_id}>
-              <Link
-                href={`/calls/${row.el_conversation_id}`}
-                className="block border-b border-line py-5 transition-colors hover:bg-raise"
-              >
-                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                  <span className="font-mono text-sm">{row.el_conversation_id}</span>
-                  <StatusTag status={row.status} />
-                  <span className="ml-auto font-mono text-xs text-faint">
-                    {durationLabel(row.duration_seconds) ?? '--:--'}
-                  </span>
-                </div>
+        {rows.length === 0 ? (
+          <p className="py-16 text-sm text-faint">No calls yet.</p>
+        ) : (
+          <ul>
+            {rows.map((row) => (
+              <li key={row.el_conversation_id}>
+                <Link
+                  href={`/calls/${row.el_conversation_id}`}
+                  className="block border-b border-line py-5 transition-colors hover:bg-raise"
+                >
+                  <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                    <span className="font-mono text-sm">{row.el_conversation_id}</span>
+                    <StatusTag status={row.status} />
+                    <span className="ml-auto font-mono text-xs text-faint">
+                      {durationLabel(row.duration_seconds) ?? '--:--'}
+                    </span>
+                  </div>
 
-                <p className="mt-2 line-clamp-2 text-sm text-faint">
-                  {row.summary ?? 'Waiting on the post call webhook.'}
-                </p>
+                  <p className="mt-2 line-clamp-2 text-sm text-faint">
+                    {row.summary ?? 'Waiting on the post call webhook.'}
+                  </p>
 
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-faint">
-                  <span>
-                    {row.tool_count} {row.tool_count === 1 ? 'tool call' : 'tool calls'}
-                  </span>
-                  {row.booking_count > 0 ? <span>{row.booking_count} booked</span> : null}
-                  {row.lead_name !== null || row.lead_email !== null ? (
-                    <span>{row.lead_name ?? row.lead_email}</span>
-                  ) : null}
-                  {row.budget_band !== null ? <span>{row.budget_band}</span> : null}
-                  <span className="ml-auto">
-                    {callTimestamp(row.created_at, env.DEFAULT_TIMEZONE)}
-                  </span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
+                  <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-faint">
+                    <span>
+                      {row.tool_count} {row.tool_count === 1 ? 'tool call' : 'tool calls'}
+                    </span>
+                    {row.booking_count > 0 ? <span>{row.booking_count} booked</span> : null}
+                    {row.lead_name !== null || row.lead_email !== null ? (
+                      <span>{row.lead_name ?? row.lead_email}</span>
+                    ) : null}
+                    {row.budget_band !== null ? <span>{row.budget_band}</span> : null}
+                    <span className="ml-auto">
+                      {callTimestamp(row.created_at, env.DEFAULT_TIMEZONE)}
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
+    </div>
   );
 }
 

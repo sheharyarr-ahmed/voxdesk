@@ -89,9 +89,7 @@ export function CallDetail({ call, transcript, tools, bookings, lead, timeZone }
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-faint">{children}</h2>
-  );
+  return <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-faint">{children}</h2>;
 }
 
 function Lead({ lead }: { lead: LeadRow | null }) {
@@ -151,8 +149,8 @@ function Transcript({ transcript }: { transcript: TranscriptTurn[] | null }) {
 
       {transcript === null || transcript.length === 0 ? (
         <p className="mt-4 text-sm text-faint">
-          No transcript yet. The tool timeline beside this is written during the call, so it
-          arrives first. SPEC.md section 5.1.
+          No transcript yet. The tool timeline beside this is written during the call, so it arrives
+          first. SPEC.md section 5.1.
         </p>
       ) : (
         <ol className="mt-4 space-y-5">

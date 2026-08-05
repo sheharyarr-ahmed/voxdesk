@@ -111,7 +111,7 @@ export default async function CallDetailPage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-ink text-body [color-scheme:dark]">
       <nav className="mx-auto max-w-6xl px-6 pt-10">
         <Link href="/calls" className="font-mono text-xs text-faint hover:text-body">
           Back to the call log
@@ -132,6 +132,6 @@ export default async function CallDetailPage({ params }: { params: Promise<{ id:
         lead={row.lead}
         timeZone={env.DEFAULT_TIMEZONE}
       />
-    </>
+    </div>
   );
 }
