@@ -91,7 +91,7 @@ describe('getSlots', () => {
     const headers = callHeaders();
     expect(headers.get('cal-api-version')).toBe('2024-09-04');
     expect(CAL_SLOTS_API_VERSION).toBe('2024-09-04');
-    expect(headers.get('authorization')).toBe('Bearer cal_test_00000000000000000000');
+    expect(headers.get('authorization')).toBe('Bearer calcom-fixture-key-not-real-0000');
     expect(lastCall()[1]?.method).toBe('GET');
     expect(lastCall()[1]?.signal).toBe(abort.signal);
   });
