@@ -1,32 +1,10 @@
 {
   "name": "booking-timeout-slot-open",
   "type": "simulation",
-  "chat_history": [
-    {
-      "role": "user",
-      "time_in_call_secs": 40,
-      "message": "Wednesday the second at half nine works for me. My name is Priya Raman and my email is priya.raman@example.com."
-    },
-    {
-      "role": "agent",
-      "time_in_call_secs": 52,
-      "message": "That is p r i y a dot r a m a n at example dot com. Is that right?"
-    },
-    { "role": "user", "time_in_call_secs": 58, "message": "That is right." },
-    {
-      "role": "agent",
-      "time_in_call_secs": 61,
-      "message": "Let me get Wednesday, September 2 at 9:30 AM booked for you now."
-    },
-    {
-      "role": "agent",
-      "time_in_call_secs": 66,
-      "message": "The calendar took longer than usual to confirm that. Let me check whether it went through before we try anything else."
-    }
-  ],
-  "simulation_scenario": "You are Priya Raman. You have already agreed to Wednesday, September 2 at 9:30 AM and confirmed your email. The agent has just told you the calendar was slow to confirm. Wait for the agent to tell you what happened. If it asks you to confirm the same time again, say yes. Answer briefly. Do not suggest a different time.",
-  "success_condition": "The agent called check_availability. The returned slots still contained Wednesday, September 2 at 9:30 AM, and the agent treated that as evidence that the earlier booking did NOT land. It then called book_meeting again for that same slot, using the start_utc value 2026-09-02T04:30:00.000Z that came from the check_availability response. Only after that booking succeeded did it tell the visitor the meeting is confirmed. It did not claim the meeting was already booked before making the second call.",
-  "simulation_max_turns": 8,
+  "chat_history": [],
+  "simulation_scenario": "You are Priya Raman of Vantage Data. You want a voice agent that qualifies inbound leads and books demos, live in about two months. Say that in your first message. Your email is priya.raman@example.com. Accept the first time slot the agent reads out. Confirm your email when it is spelled back to you. If the agent tells you the calendar was slow to confirm, just ask whether it went through and then wait for it to sort it out. Do not suggest a different time and do not end the call early.",
+  "success_condition": "book_meeting returned reason upstream_timeout. The agent then called check_availability rather than retrying blindly or declaring failure. The slot the visitor had agreed to was still present in the returned slots, and the agent treated that as evidence the booking had NOT landed. It then called book_meeting a second time for that same slot, with the same start_utc, name and email. At no point before a successful booking did the agent tell the visitor the meeting was confirmed or booked, and at no point did it tell the visitor the slot had been taken by someone else.",
+  "simulation_max_turns": 18,
   "simulation_environment": "production",
   "tool_mock_config": {
     "mocking_strategy": "all",
@@ -44,7 +22,7 @@
     "book_meeting": [
       {
         "parameter_conditions": [],
-        "mock_result": "{\"ok\":true,\"booking_uid\":\"mockBooking2026Sep02\",\"start_utc\":\"2026-09-02T04:30:00.000Z\",\"label\":\"Wednesday, September 2 at 9:30 AM\",\"speak\":\"You are booked for Wednesday, September 2 at 9:30 AM. The invite is on its way to priya.raman@example.com.\"}",
+        "mock_result": "{\"ok\":false,\"reason\":\"upstream_timeout\",\"speak\":\"The calendar took longer than usual to confirm that. Let me check whether it went through before we try anything else.\"}",
         "is_error": false
       }
     ]

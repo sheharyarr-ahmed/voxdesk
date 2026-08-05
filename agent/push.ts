@@ -24,6 +24,19 @@ const HERE = new URL('./', import.meta.url);
 const DRY = argv.includes('--dry');
 const RUN_TESTS = argv.includes('--run-tests');
 
+/**
+ * --only=a,b restricts a test run to named tests.
+ *
+ * Not a convenience. Agent testing draws on the same monthly credit pool as live
+ * conversation on the free plan, measured at roughly 750 credits per simulated
+ * conversation, so re-running the whole suite after every prompt edit would spend
+ * the budget the gate call needs. Iterate on what failed.
+ */
+const ONLY = (argv.find((flag) => flag.startsWith('--only=')) ?? '')
+  .replace('--only=', '')
+  .split(',')
+  .filter((name) => name !== '');
+
 type JsonObject = Record<string, unknown>;
 
 // ---------------------------------------------------------------- environment
@@ -377,9 +390,20 @@ async function syncAgent(
   // Merged onto live rather than sent bare. The platform replaces a nested object
   // it receives, so posting only the fields this build owns would drop the voice,
   // turn taking and widget settings that live beside them.
+  const conversationConfig = deepMerge(
+    liveAgent.conversation_config,
+    desiredFragment.conversation_config,
+  ) as JsonObject;
+
+  // prompt.tools is the deprecated inline form of prompt.tool_ids, and the API
+  // rejects a body carrying both. It is only ever populated by the platform
+  // echoing our own tool_ids back, so dropping it from the patch loses nothing.
+  const prompt = (conversationConfig.agent as JsonObject | undefined)?.prompt;
+  if (isObject(prompt)) delete prompt.tools;
+
   await api('PATCH', `/v1/convai/agents/${AGENT_ID}`, {
     name: desiredFragment.name,
-    conversation_config: deepMerge(liveAgent.conversation_config, desiredFragment.conversation_config),
+    conversation_config: conversationConfig,
     platform_settings: deepMerge(liveAgent.platform_settings, desiredFragment.platform_settings),
   });
   console.log('    updated');
@@ -388,7 +412,11 @@ async function syncAgent(
 // ----------------------------------------------------------------- test runner
 
 async function runTests(testIds: Record<string, string>): Promise<void> {
-  const ids = Object.values(testIds);
+  const selected = ONLY.length === 0 ? testIds : Object.fromEntries(ONLY.map((n) => [n, testIds[n]]));
+  const missing = Object.entries(selected).filter(([, id]) => id === undefined);
+  if (missing.length > 0) throw new Error(`push: unknown test ${missing.map(([n]) => n).join(', ')}`);
+
+  const ids = Object.values(selected);
   console.log(`running ${ids.length} tests against ${AGENT_ID}`);
 
   const invocation = await api<{
