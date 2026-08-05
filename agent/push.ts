@@ -325,6 +325,15 @@ function resolveToolRefs(node: unknown, tools: Record<string, string>): unknown 
   return out;
 }
 
+/**
+ * Note before running the suite: `happy-path` sets `mocking_strategy: "none"`, so
+ * it calls the real tool routes and **creates a real Cal.com booking on every
+ * run**. That is deliberate. It is the only test that proves connection 3 end to
+ * end, and a suite where nothing touches Cal.com would pass with a broken route
+ * or an expired key. The cost is one bookable slot per run that has to be
+ * cancelled afterwards. Use `--only=` to avoid re-running it when iterating on
+ * something else.
+ */
 async function syncTests(tools: Record<string, string>): Promise<Record<string, string>> {
   const live = await api<TestList>('GET', '/v1/convai/agent-testing?page_size=100');
   const resolved: Record<string, string> = {};

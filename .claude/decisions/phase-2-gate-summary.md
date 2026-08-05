@@ -92,12 +92,44 @@ The `agents/agents/` segment is doubled. `/app/agents` alone is the Agents analy
 
 On that page, **Mock tools** must read **Off** for real tools to fire, and the **Variables** panel is where `visitor_timezone` appears. It was pre-filled with `Asia/Karachi` from the `dynamic_variable_placeholders` this phase pushed, which is the thing that stops a dashboard call failing on `timezone` being empty.
 
+## A live exposure found after the gate, and closed
+
+Asking where a second unexpected Cal.com booking came from turned up something larger than the answer to the question.
+
+**The answer to the question first, because it is not alarming.** Every booking traces to a deliberate action. Two came from Phase 1 curl by hand, two from `happy-path`, which sets `mocking_strategy: "none"` and therefore creates a real booking on every run, and one from the gate call. Nothing runs on a schedule: no crons in the repository, no `vercel.json` or `vercel.ts`, no background process, `simulation_library.enabled: false`. A test being *attached* to the agent is not a test being scheduled.
+
+**The larger finding.** The agent was configured `auth.enable_auth: false`, `allowlist: []`, alongside `daily_limit: 100000` and `agent_concurrency_limit: -1`. Its id is in five files in pushed history on a repository `gh` confirms is `PUBLIC`, `SPEC.md` among them. So anyone reading the repository could open a conversation straight against ElevenLabs, walk around the §6.1 passcode gate entirely, book real calendar events and drain the remaining credits.
+
+That breaks SPEC.md §10, which puts "public unauthenticated voice" out of scope and names the quota as the reason, and it defeats the whole three layer defence in §6.1, which only ever guarded *our* route to voice minutes and never the agent id itself.
+
+**Closed** by adding `platform_settings.auth.enable_auth: true` to `agent/agent.config.json` and pushing it. This is the design §6.1 already assumed rather than a new one: `POST /api/session` mints a conversation token server side with the API key, which is exactly the authorisation the platform now demands.
+
+Verified by connecting as an attacker would, not by reading the setting back:
+
+```
+GET /v1/convai/conversation?agent_id=... with websocket upgrade headers, no credentials
+  -> HTTP/1.1 101 Switching Protocols
+  -> first frame: "This agent requires conversations to be authorized.
+                   Please generate a signed link for conversation starting using /v1/co..."
+```
+
+Stated precisely, because the 101 matters. The websocket **transport** handshake still completes and the refusal happens at the application layer immediately after. That is auth in the right place, not a network level block, and anyone reading only the status line would draw the wrong conclusion.
+
+What a rejected attempt costs: credits unchanged at 8812, and the attempt **does** leave an ElevenLabs conversation record, `status: failed`, `0 s`, zero turns, `cost: None`. It never reaches our routes, and no row appears in our `conversations` table. Two such stubs exist from this probe and are expected.
+
+Our own path was confirmed unbroken in the same pass: `GET /v1/convai/conversation/token?agent_id=...` with `xi-api-key` still returns `200` with a 1039 character token.
+
+**Residual risk, stated rather than glossed.** The token mints and unauthenticated access is refused, but a token authorised WebRTC connect cannot be proven end to end until the Phase 4 client exists. If it misbehaves there, `enable_auth` is a one line revert in `agent/agent.config.json`. This belongs in the Phase 4 gate alongside V5.
+
+**A first probe that proved nothing, kept as a warning.** The same request over HTTP/2 returned `404`, which looks like a clean refusal and is not one: HTTP/2 does not carry the classic `Upgrade` header, so the request never reached the websocket endpoint. `--http1.1` is required or the check silently measures the wrong thing.
+
 ## Deviations recorded this phase
 
 Numbering continues from the Phase 1 gate record.
 
 | # | Deviation | Reason |
 |---|---|---|
+| 17 | `platform_settings.auth.enable_auth` is set to `true` and held in `agent/agent.config.json` | SPEC.md never names this field, because §6.1 assumed the gate was the whole defence. It is not: the gate guards our route, and the agent id is a second, public door. See the section above. |
 | 14 | `book_meeting` declares `response_timeout_secs: 10`, `check_availability` declares `5` | The range is 5 to 120, not a fixed 5. Deviation 13's 4.3 s route budget leaves about 700 ms under a 5 s ceiling, and blowing that ceiling hands the agent no structured body at all. See `phase-2-tool-timeout-bounds.md`. |
 | 15 | `agent/tests/*.json` added outside the SPEC.md §4 tree | Five committed simulation tests. The deterministic tool mock is what caught the inverted reconciliation, and a live call cannot provoke that state on demand. |
 | 16 | `agent/push.ts` gains `--dry`, `--run-tests` and `--only=` modes | §6.8 specifies `--dry` only. The test runner lives in the same file rather than a second one so the tree gains one file, not two, and `--only` exists because the test surface is metered. |
@@ -113,6 +145,8 @@ Numbering continues from the Phase 1 gate record.
 | Conversation for Phase 3 to ingest | `conv_6701kz8fyrk5fzbre5jprd6s5hbk`, transcript and analysis both present |
 | Post call webhook | none. Phase 3, and `ELEVENLABS_WEBHOOK_SECRET` is still the one unset variable |
 | Credits | 1188 of 10000, reset 2026-08-29 |
-| Cal.com | `9Vhn8RCrD39GkRvgA4DkGQ` is the gate booking. `7c2ARvTNBSYbX598BEmUqu` at 3:15 PM is a leftover test booking still to cancel |
+| Cal.com | `9Vhn8RCrD39GkRvgA4DkGQ` is the gate booking. Both `dana.whitfield@example.com` test bookings cancelled |
+| Agent auth | `enable_auth: true`. Every conversation now needs a token from `POST /api/session`. Phase 4 must confirm a token authorised WebRTC connect actually works |
+| Standing hazard | `happy-path` creates a real Cal.com booking on every run, by design. Cancel it afterwards, and use `--only=` when iterating on anything else |
 
 V5 remains open by design and now closes at the Phase 4 gate. See the corrected record in `v5-webrtc-connect.md`.
