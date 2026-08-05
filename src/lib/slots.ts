@@ -56,6 +56,52 @@ export function slotLabel(startUtcISO: string, timeZone: string): string {
   return `${day} at ${time}`;
 }
 
+const callFormatters = new Map<string, Intl.DateTimeFormat>();
+
+/**
+ * The /calls timestamp, phase 3.
+ *
+ * It lives beside slotLabel rather than in a new module because this file already
+ * owns every Intl.DateTimeFormat in the build, along with the memo maps and the
+ * U+202F normalisation that any new formatter has to repeat. Adding src/lib/format.ts
+ * for two functions would be a file outside the SPEC.md section 4 tree.
+ *
+ * It carries the year, which slotLabel deliberately omits. That omission is right for
+ * a three day booking window and wrong for a call log that outlives one.
+ *
+ * Takes an ISO string rather than a Date for the same reason slotLabel does. Because
+ * src/lib/db/client.ts sets fetch_types: false, a timestamptz column comes back as the
+ * Postgres text form, 2026-08-05 08:17:50.876827+00, and not as a Date. V8 happens to
+ * parse that, but it is not ISO 8601 and nothing should depend on a lenient parser, so
+ * the queries cast through to_json and hand a real ISO string down to here.
+ */
+export function callTimestamp(atISO: string, timeZone: string): string {
+  const at = new Date(atISO);
+  if (Number.isNaN(at.getTime())) return 'unknown time';
+
+  const existing = callFormatters.get(timeZone);
+  const formatter =
+    existing ??
+    new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  if (existing === undefined) callFormatters.set(timeZone, formatter);
+  return normaliseSpaces(formatter.format(at));
+}
+
+/** Call length as m:ss. Null while a call is still in progress or never reported one. */
+export function durationLabel(seconds: number | null): string | null {
+  if (seconds === null || seconds < 0) return null;
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds - minutes * 60).padStart(2, '0')}`;
+}
+
 /**
  * Cal.com hands back the offset form when timeZone is requested, for example
  * 2026-08-05T09:00:00.000+05:00. new Date(...).toISOString() is the conversion

@@ -1,1 +1,33 @@
 @import "tailwindcss";
+
+/*
+ * The brand tokens, SPEC.md section 8: true black, mint accent used once, Space
+ * Grotesk display with tight tracking, Space Mono labels.
+ *
+ * They land in phase 3 rather than phase 4 because /calls is the artifact SPEC.md
+ * section 5 says a prospect inspects, and phase 4's line names only voice-console.tsx,
+ * so a dashboard shipped unstyled here would still be unstyled in the demo video.
+ * The console itself, its states and the transcript pane are still phase 4 work.
+ *
+ * Mint carries exactly one meaning across the build: evidence the machine did work.
+ * A completed call, and a measured latency. Nothing decorative is ever mint.
+ *
+ * The two font variables are supplied by next/font/google in src/app/layout.tsx.
+ */
+@theme {
+  --color-ink: #000000;
+  --color-raise: #0b0b0c;
+  --color-line: #1e1e21;
+  --color-body: #e9e9ec;
+  --color-faint: #7c7c85;
+  --color-mint: #6ee7b7;
+
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-body);
+  font-family: var(--font-display);
+}
