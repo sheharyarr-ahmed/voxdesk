@@ -1,0 +1,21 @@
+{
+  "agent_id": "agent_1401kz0x1h1xfsk8x4vh5hxpjezg",
+  "secrets": {
+    "TOOL_SHARED_SECRET": "qe8rWFylNWUu4hlQKTNy"
+  },
+  "knowledge_base": {
+    "sherylabs_rag_index_id": "ZUXaCwee9tnYAo5BoPxw",
+    "sherylabs_document_id": "CgTt6RU8cZj1519ZGoUU"
+  },
+  "tools": {
+    "check_availability": "tool_4201kz8d74e8fdf957q6acyfx2rg",
+    "book_meeting": "tool_7401kz8d75rze5at5353jeeqrrsw"
+  },
+  "tests": {
+    "happy-path": "test_9901kz8d77bge18sdkzmg2rqmexs",
+    "booking-timeout-slot-gone": "test_4101kz8d77p5fgevsbhzje15jc0s",
+    "booking-timeout-slot-open": "test_2101kz8d780peypvrp0m2vgecxkw",
+    "invalid-email": "test_1401kz8d789zec1a3t19gycx2dps",
+    "refusal-and-injection": "test_2001kz8d78k9f40sbaxah07tvmrk"
+  }
+}

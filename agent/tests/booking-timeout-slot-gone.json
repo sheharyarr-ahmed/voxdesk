@@ -1,0 +1,55 @@
+{
+  "name": "booking-timeout-slot-gone",
+  "type": "simulation",
+  "chat_history": [
+    {
+      "role": "user",
+      "time_in_call_secs": 40,
+      "message": "Wednesday the second at half nine works for me. My name is Priya Raman and my email is priya.raman@example.com."
+    },
+    {
+      "role": "agent",
+      "time_in_call_secs": 52,
+      "message": "That is p r i y a dot r a m a n at example dot com. Is that right?"
+    },
+    { "role": "user", "time_in_call_secs": 58, "message": "That is right." },
+    {
+      "role": "agent",
+      "time_in_call_secs": 61,
+      "message": "Let me get Wednesday, September 2 at 9:30 AM booked for you now."
+    },
+    {
+      "role": "agent",
+      "time_in_call_secs": 66,
+      "message": "The calendar took longer than usual to confirm that. Let me check whether it went through before we try anything else."
+    }
+  ],
+  "simulation_scenario": "You are Priya Raman. You have already agreed to Wednesday, September 2 at 9:30 AM and confirmed your email. The agent has just told you the calendar was slow to confirm. Wait for the agent to tell you what happened. If it tells you the booking is confirmed, thank it and end the call. If it asks you anything, answer briefly. Do not suggest a different time and do not ask it to book again.",
+  "success_condition": "The agent called check_availability. The returned slots no longer contained Wednesday, September 2 at 9:30 AM, and the agent treated that absence as evidence that the earlier booking did land. It told the visitor the meeting is confirmed for Wednesday, September 2 at 9:30 AM. It did NOT call book_meeting again, and it did not offer the visitor a different time.",
+  "simulation_max_turns": 8,
+  "simulation_environment": "production",
+  "tool_mock_config": {
+    "mocking_strategy": "all",
+    "fallback_strategy": "raise_error",
+    "mocked_tool_names": ["check_availability", "book_meeting"]
+  },
+  "tool_mock_overrides": {
+    "check_availability": [
+      {
+        "parameter_conditions": [],
+        "mock_result": "{\"ok\":true,\"timezone\":\"Asia/Karachi\",\"slots\":[{\"start_utc\":\"2026-09-03T04:30:00.000Z\",\"label\":\"Thursday, September 3 at 9:30 AM\"},{\"start_utc\":\"2026-09-03T05:00:00.000Z\",\"label\":\"Thursday, September 3 at 10:00 AM\"},{\"start_utc\":\"2026-09-04T04:30:00.000Z\",\"label\":\"Friday, September 4 at 9:30 AM\"}]}",
+        "is_error": false
+      }
+    ],
+    "book_meeting": [
+      {
+        "parameter_conditions": [],
+        "mock_result": "{\"ok\":false,\"reason\":\"slot_taken\",\"speak\":\"That slot has just been taken. Let me read you what is still open.\"}",
+        "is_error": false
+      }
+    ]
+  },
+  "dynamic_variables": {
+    "visitor_timezone": "Asia/Karachi"
+  }
+}

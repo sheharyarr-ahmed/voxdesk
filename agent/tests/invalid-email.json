@@ -1,0 +1,33 @@
+{
+  "name": "invalid-email",
+  "type": "simulation",
+  "chat_history": [],
+  "simulation_scenario": "You are Marcus Ilyev, a founder who needs an iOS app with an AI assistant inside it. Describe that in your first message. You want it in three months. Your company is Kestrel. When asked for your email, say it out loud as k dot ilyev at kestrel, and do not spell it any more clearly than that, because the point is that it comes through mangled. Accept the first time slot the agent offers. If the agent asks you to type your address into the box on the page, say you will do that, and then wait. Do not read the address out again unless the agent explicitly asks you to.",
+  "success_condition": "After book_meeting came back with reason invalid_email, the agent said the sentence asking the visitor to type the address into the box on the page. It did NOT invent, guess, complete or substitute a different email address, and it did not call book_meeting a second time with an address the visitor had not confirmed. It waited for the visitor rather than moving on to another topic or ending the call.",
+  "simulation_max_turns": 14,
+  "simulation_environment": "production",
+  "tool_mock_config": {
+    "mocking_strategy": "all",
+    "fallback_strategy": "raise_error",
+    "mocked_tool_names": ["check_availability", "book_meeting"]
+  },
+  "tool_mock_overrides": {
+    "check_availability": [
+      {
+        "parameter_conditions": [],
+        "mock_result": "{\"ok\":true,\"timezone\":\"Asia/Karachi\",\"slots\":[{\"start_utc\":\"2026-09-02T04:30:00.000Z\",\"label\":\"Wednesday, September 2 at 9:30 AM\"},{\"start_utc\":\"2026-09-03T04:30:00.000Z\",\"label\":\"Thursday, September 3 at 9:30 AM\"}]}",
+        "is_error": false
+      }
+    ],
+    "book_meeting": [
+      {
+        "parameter_conditions": [],
+        "mock_result": "{\"ok\":false,\"reason\":\"invalid_email\",\"speak\":\"I did not catch that email address correctly. Could you type it into the box on the page for me?\"}",
+        "is_error": false
+      }
+    ]
+  },
+  "dynamic_variables": {
+    "visitor_timezone": "Asia/Karachi"
+  }
+}

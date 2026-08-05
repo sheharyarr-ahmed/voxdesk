@@ -1,0 +1,47 @@
+{
+  "type": "webhook",
+  "name": "book_meeting",
+  "description": "Books the discovery call on the real calendar and sends the invite. Call this only after check_availability has returned a slot in this conversation and the visitor has agreed to it, and only after you have spelled the email address back and been told it is right. start_utc must be copied exactly from a check_availability response. Never build a time yourself. On success the response is {ok: true, booking_uid, start_utc, label, speak} and you say the speak sentence. On failure the response is {ok: false, reason, speak} and you say the speak sentence exactly as written and then follow the rule for that reason in your instructions.",
+  "response_timeout_secs": 10,
+  "execution_mode": "immediate",
+  "force_pre_tool_speech": true,
+  "api_schema": {
+    "url": "https://voxdesk-seven.vercel.app/api/tools/book",
+    "method": "POST",
+    "content_type": "application/json",
+    "request_headers": {
+      "x-vd-tool-secret": { "secret_name": "TOOL_SHARED_SECRET" }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "description": "Booking request for the SheryLabs discovery call event type.",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "dynamic_variable": "system__conversation_id"
+        },
+        "timezone": {
+          "type": "string",
+          "dynamic_variable": "visitor_timezone"
+        },
+        "start_utc": {
+          "type": "string",
+          "description": "The exact start_utc string from the check_availability response for the slot the visitor agreed to, copied character for character. Never write this value yourself and never adjust it."
+        },
+        "name": {
+          "type": "string",
+          "description": "The visitor's full name as they gave it."
+        },
+        "email": {
+          "type": "string",
+          "description": "The visitor's email address, exactly as they confirmed it when you spelled it back to them."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional. One or two sentences on what the visitor wants built, in their own words, so the call starts with context."
+        }
+      },
+      "required": ["conversation_id", "timezone", "start_utc", "name", "email"]
+    }
+  }
+}

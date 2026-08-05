@@ -1,0 +1,64 @@
+{
+  "agent_name": "VoxDesk Concierge",
+
+  "resolve": {
+    "secrets": ["TOOL_SHARED_SECRET"],
+    "knowledge_base": [
+      { "name": "sherylabs", "file": "knowledge/sherylabs.md", "usage_mode": "auto", "rag_index": true }
+    ],
+    "tools": ["check_availability", "book_meeting"],
+    "tests": [
+      "happy-path",
+      "booking-timeout-slot-gone",
+      "booking-timeout-slot-open",
+      "invalid-email",
+      "refusal-and-injection"
+    ],
+    "prompt_file": "prompts/system.md"
+  },
+
+  "conversation_config": {
+    "agent": {
+      "prompt": {
+        "llm": "gemini-2.5-flash",
+        "temperature": 0.0,
+        "timezone": "Asia/Karachi",
+        "enable_parallel_tool_calls": false
+      },
+      "dynamic_variables": {
+        "dynamic_variable_placeholders": {
+          "visitor_timezone": "Asia/Karachi"
+        }
+      }
+    }
+  },
+
+  "platform_settings": {
+    "data_collection": {
+      "name": {
+        "type": "string",
+        "description": "The visitor's full name, exactly as they gave it. Null if they never said it."
+      },
+      "email": {
+        "type": "string",
+        "description": "The visitor's email address as confirmed in the conversation. Null if no address was confirmed."
+      },
+      "company": {
+        "type": "string",
+        "description": "The company, product or project the visitor is working on. Null if they never named one."
+      },
+      "project_type": {
+        "type": "string",
+        "description": "What the visitor wants built, in their own words, in one short phrase. For example a voice agent for inbound leads, or an iOS companion app. Null if the project was never described."
+      },
+      "timeline": {
+        "type": "string",
+        "description": "When the visitor needs the work delivered, in their own words. For example next month, or before the end of the quarter. Null if timing never came up."
+      },
+      "budget_band": {
+        "type": "string",
+        "description": "Which SheryLabs engagement phase this project starts at, as one of exactly these three values: discovery, production_build, or retainer. Use the band the agent stated in the conversation. Null if no band was stated."
+      }
+    }
+  }
+}

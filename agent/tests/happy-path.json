@@ -1,0 +1,17 @@
+{
+  "name": "happy-path",
+  "type": "simulation",
+  "chat_history": [],
+  "simulation_scenario": "You are Dana Whitfield, a founder building an inbound sales product. You want a voice agent that answers questions and books demos from your website. Open by describing that. Answer questions naturally and briefly, one thing at a time. Your email is dana.whitfield@example.com and your company is Northwind Labs. You want it live in about six weeks. When the agent offers times, accept the first one it reads out. When it spells your email back, confirm it is correct. Do not volunteer your name or email until you are asked for them. Do not ask about anything outside SheryLabs services and booking a call.",
+  "success_condition": "The agent called check_availability before naming any specific time. It read back real slots in the visitor's timezone. Before calling book_meeting it spelled the email address back and got a confirmation. It then called book_meeting using a start_utc value that came from the check_availability response rather than one it composed itself. The booking succeeded and the agent closed by restating the day, the time and the email address the invite is going to. At some point it also stated which of the three SheryLabs engagement phases the project starts at.",
+  "simulation_max_turns": 16,
+  "simulation_environment": "production",
+  "tool_mock_config": {
+    "mocking_strategy": "none",
+    "fallback_strategy": "call_real_tool",
+    "mocked_tool_names": []
+  },
+  "dynamic_variables": {
+    "visitor_timezone": "Asia/Karachi"
+  }
+}

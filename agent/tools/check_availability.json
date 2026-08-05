@@ -1,0 +1,38 @@
+{
+  "type": "webhook",
+  "name": "check_availability",
+  "description": "Returns the open discovery call slots on the real calendar, already formatted for the visitor's own timezone. Call this before naming any specific time, and call it again whenever you need a fresh list. On success the response is {ok: true, timezone, slots} where slots is an array of at most five objects, each with a start_utc string and a human readable label. There is no speak field on success, so read the labels out yourself. On failure the response is {ok: false, reason, speak} and you say the speak sentence exactly as written. Keep the start_utc values for this conversation, because book_meeting will only accept one of them.",
+  "response_timeout_secs": 5,
+  "execution_mode": "immediate",
+  "api_schema": {
+    "url": "https://voxdesk-seven.vercel.app/api/tools/availability",
+    "method": "POST",
+    "content_type": "application/json",
+    "request_headers": {
+      "x-vd-tool-secret": { "secret_name": "TOOL_SHARED_SECRET" }
+    },
+    "request_body_schema": {
+      "type": "object",
+      "description": "Availability request for the SheryLabs discovery call event type.",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "dynamic_variable": "system__conversation_id"
+        },
+        "timezone": {
+          "type": "string",
+          "dynamic_variable": "visitor_timezone"
+        },
+        "start_date": {
+          "type": "string",
+          "description": "Optional. The first calendar day to search, in exactly the format YYYY-MM-DD, for example 2026-08-12. Set this only when the visitor asked for a specific date and you are certain what that date is. If you are not certain, leave it out and the calendar starts from today."
+        },
+        "days": {
+          "type": "integer",
+          "description": "Optional. How many days to search from the start date. A whole number from 1 to 14. Leave it out for the default of 3. Use 14 when the visitor asks you to look further ahead."
+        }
+      },
+      "required": ["conversation_id", "timezone"]
+    }
+  }
+}
