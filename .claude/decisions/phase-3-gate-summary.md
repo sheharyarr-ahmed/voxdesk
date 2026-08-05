@@ -163,10 +163,21 @@ The honest limit of this gate is that a hand signed curl and our verifier share 
 construction. If `${t}.${body}` were wrong in the same way in both, both legs would still
 pass.
 
-Nothing free can close it. The next real conversation on the agent will deliver a genuinely
-ElevenLabs signed payload to a route that is now registered, pointed at and holding the
-right secret, and either it ingests or it does not. Phase 4 records the demo call anyway,
-so that call is the natural closer at no extra cost. Until then the claim is stated
-narrowly: **signature verification is enforced and its failure modes are proven from
-outside; the signing construction matches the documentation and our own signer, and has not
-yet been confirmed against a delivery ElevenLabs signed.**
+**One free attempt was made and it produced nothing.** An unauthenticated websocket connect
+against the agent, over `--http1.1`, creates a conversation record at zero credit cost.
+`conv_8601kz8yg18bftyrbvx02gyq32ca` appeared at `status: failed`, `0 s`, `0` messages,
+credits unchanged at 8812. No delivery followed: `most_recent_failure_error_code` stayed
+null, `usage` stayed null, and our own row count stayed at 9. So a rejected connect does
+not emit `post_call_transcription`, which is consistent with it emitting
+`call_initiation_failure`, an event this workspace does not subscribe to. Worth the attempt
+because it cost nothing; recorded because a future session would otherwise try it again.
+
+Nothing else free can close it. `simulate-conversation` creates no conversation record at
+all, agent test runs create none either, and both cost credits. The remaining options are a
+real spoken call, about 40 s and roughly 230 of the 1188 credits, or waiting for phase 4,
+which records a demo call anyway and therefore closes this for free.
+
+Until it closes, the claim is stated narrowly: **signature verification is enforced and its
+failure modes are proven from outside, including a valid signature over a tampered body;
+the signing construction matches the documentation, V1's record and our own signer, and has
+not yet been confirmed against a payload ElevenLabs signed.**
