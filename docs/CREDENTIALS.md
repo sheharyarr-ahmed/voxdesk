@@ -38,7 +38,7 @@ SPEC.md §7 says "all nine secrets" while its own table lists ten rows. This doc
 | 1 | `TOOL_SHARED_SECRET` | yes | captured, generated locally |
 | 1 | `SESSION_SECRET` | yes | captured, generated locally |
 | 1 | `DEMO_PASSCODE` | yes | captured |
-| 3 | `ELEVENLABS_WEBHOOK_SECRET` | yes | pending, needs a deployed URL first |
+| 3 | `ELEVENLABS_WEBHOOK_SECRET` | yes | captured 2026-08-05, in `.env.local` and in Vercel production |
 | any | `DAILY_SESSION_CAP` | no, a tunable | default 6 |
 | any | `DEFAULT_TIMEZONE` | no, a tunable | default Asia/Karachi |
 
@@ -192,6 +192,10 @@ Make it pronounceable. You will be reading it to someone over a call.
 Server only. Verifies the HMAC on the post call webhook before anything touches the database, SPEC.md §6.6.
 
 Captured in Phase 3, once a stable production URL exists, because the webhook needs a real destination.
+
+**As captured, 2026-08-05.** Webhook id `502d684855734b6f89634f1a109cae88`, name `voxdesk-post-call`, url `https://voxdesk-seven.vercel.app/api/webhooks/post-call`, `auth_type: hmac`, `retry_enabled: true`. None of those are secrets. The API path below was used rather than the dashboard, and the response was filtered so `webhook_secret` was written straight to `.env.local` and only `webhook_id` was ever printed.
+
+There is no way to replay a past delivery. Retries exist and fire only on `5xx`, `429` or `408`, and only for a delivery that was already attempted, so a conversation that predates the webhook is never delivered. That is why our route answers 500 rather than 401 when the secret is missing: 4xx is not retried, and a 4xx also counts toward the ten consecutive failures that auto disable the webhook.
 
 Two paths. Both were exercised against the free workspace during V1.
 
