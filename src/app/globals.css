@@ -26,6 +26,18 @@
   --font-mono: var(--font-space-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
+/*
+ * Not cosmetic. Without it the browser keeps rendering native controls for a light
+ * page, so the passcode input on /gate becomes a dark field on a dark body and is
+ * invisible. Declaring the scheme hands the browser the contrast rules for inputs,
+ * buttons, scrollbars and the caret, which is the whole cost of moving the body to
+ * true black before phase 4 styles those controls itself. Caught by screenshotting
+ * the deployed gate, not by reading the diff.
+ */
+:root {
+  color-scheme: dark;
+}
+
 body {
   background-color: var(--color-ink);
   color: var(--color-body);
