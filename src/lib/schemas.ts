@@ -133,3 +133,112 @@ export const TOOL_TIMEOUT: { [K in ToolName]: ToolFailure<K> } = {
 export const SessionResponse = z.object({
   conversationToken: z.string().min(1),
 });
+
+/**
+ * A single tool call or tool result as it appears inside a transcript turn.
+ *
+ * This projection is a security boundary, not a size optimisation. The real payload
+ * carries tool_calls[].tool_details, and tool_details.headers is where
+ * x-vd-tool-secret sits. ElevenLabs redacts it on the conversations GET surface, but
+ * the webhook is a different surface and the parsed result is persisted to a jsonb
+ * column that /calls/[id] renders. Zod strips keys it was not told about, so not
+ * declaring tool_details is precisely what keeps the shared secret out of the
+ * database. Do not add it back for convenience.
+ */
+const TranscriptToolCallSchema = z.object({
+  tool_name: z.string().min(1).max(128),
+  request_id: z.string().min(1).max(256),
+});
+
+const TranscriptToolResultSchema = z.object({
+  tool_name: z.string().min(1).max(128),
+  request_id: z.string().min(1).max(256),
+  is_error: z.boolean(),
+  tool_latency_secs: z.number(),
+});
+
+const TranscriptTurnSchema = z.object({
+  role: z.string().min(1).max(32),
+  // Null on a turn that carries only a tool call or only a tool result. Six of the
+  // twenty two turns in the phase 2 gate conversation are that shape.
+  message: z.string().nullable(),
+  time_in_call_secs: z.number(),
+  tool_calls: z.array(TranscriptToolCallSchema).optional(),
+  tool_results: z.array(TranscriptToolResultSchema).optional(),
+});
+
+/**
+ * One extracted lead field, SPEC.md section 6.5.
+ *
+ * The trap: data_collection_results is a map of objects, not a map of scalars. Each
+ * entry is { data_collection_id, value, json_schema, rationale } and an unset field
+ * arrives as an object whose value is null rather than as a missing key. Reading the
+ * entry as a scalar yields "[object Object]" in the database, which looks like data.
+ */
+const DataCollectionResultSchema = z.object({
+  value: z.union([z.string(), z.number(), z.boolean()]).nullable(),
+});
+
+/**
+ * Connection 4, SPEC.md section 2. The body ElevenLabs POSTs after a call ends.
+ *
+ * Confirmed against conv_6701kz8fyrk5fzbre5jprd6s5hbk rather than assumed, because
+ * the webhook cannot be replayed and a shape error is therefore unrecoverable.
+ *
+ * The envelope is the second trap. The webhook body is wrapped in
+ * { type, event_timestamp, data } while the GET /v1/convai/conversations/{id}
+ * response is the bare conversation object, so a fixture built from the GET parses
+ * against nothing here.
+ *
+ * Only fields that are read are declared. Everything else strips, which is the same
+ * rule src/lib/cal.ts states for the Cal.com envelopes: an added upstream field must
+ * never throw after the side effect has already happened.
+ */
+export const PostCallPayloadSchema = z.object({
+  type: z.string().min(1).max(64),
+  event_timestamp: z.number().optional(),
+  data: z.object({
+    conversation_id: z.string().min(1).max(128),
+    agent_id: z.string().max(128).optional(),
+    status: z.string().min(1).max(32),
+    transcript: z.array(TranscriptTurnSchema),
+    metadata: z.object({
+      start_time_unix_secs: z.number(),
+      call_duration_secs: z.number(),
+    }),
+    // Absent on a conversation that ended before analysis could run, which is what a
+    // zero turn failed connect produces. Optional so that payload still ingests and
+    // still shows its tool timeline rather than being rejected and lost.
+    analysis: z
+      .object({
+        transcript_summary: z.string().nullable().optional(),
+        call_successful: z.string().max(32).optional(),
+        data_collection_results: z.record(z.string(), DataCollectionResultSchema).optional(),
+      })
+      .optional(),
+  }),
+});
+
+export type PostCallPayload = z.infer<typeof PostCallPayloadSchema>;
+export type TranscriptTurn = z.infer<typeof TranscriptTurnSchema>;
+
+/**
+ * What conversations.transcript holds once ingest has written it, and what /calls/[id]
+ * parses on the way back out. A jsonb column reads as unknown under strict, and the
+ * row may predate a schema change, so the page parses rather than casting.
+ */
+export const StoredTranscript = z.array(TranscriptTurnSchema);
+
+/**
+ * Salvaged from the raw body before the full parse, the same way ConversationAnchor
+ * is above.
+ *
+ * The workspace subscribes to transcript only, but post_call_audio and
+ * call_initiation_failure carry no transcript array and would fail
+ * PostCallPayloadSchema. Reading the type first lets an unsubscribed event be
+ * accepted and dropped instead of 400ing, which matters because a 4xx counts toward
+ * the ten consecutive failures that auto disable a webhook. Deviation 21.
+ */
+export const PostCallEnvelope = z.object({
+  type: z.string().min(1).max(64),
+});
