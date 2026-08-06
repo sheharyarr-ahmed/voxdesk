@@ -5,8 +5,6 @@ import { GateForm } from './gate-form';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Styling lands in phase 4 with the rest of the brand system. This is the
-// working gate, not the finished one.
 export default async function GatePage({
   searchParams,
 }: {
@@ -18,10 +16,25 @@ export default async function GatePage({
     : '/';
 
   return (
-    <main>
-      <h1>VoxDesk</h1>
-      <p>This demo is passcode gated. The gate is a quota defence, not a security posture.</p>
-      <GateForm next={target} />
-    </main>
+    // The surface is applied here rather than on `body`. Phase 3 put true black on the
+    // body element and Tailwind's preflight, which sets input backgrounds transparent,
+    // turned the passcode field into an invisible box on an invisible background. The
+    // field below now carries an explicit background and border for that reason.
+    <div className="min-h-screen bg-ink text-body [color-scheme:dark]">
+      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-faint">Passcode</p>
+        <h1 className="mt-2 font-mono text-lg tracking-tight">VoxDesk</h1>
+        <p className="mt-3 text-sm leading-relaxed text-faint">
+          This demo is passcode gated. The gate is a quota defence, not a security posture. Voice
+          minutes are metered, so the passcode is what stops ten open tabs draining the month.
+        </p>
+
+        <GateForm next={target} />
+
+        <p className="mt-16 border-t border-line pt-6 font-mono text-xs text-faint">
+          Voice by ElevenLabs
+        </p>
+      </main>
+    </div>
   );
 }
