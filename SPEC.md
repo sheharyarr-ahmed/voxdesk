@@ -27,7 +27,9 @@ Any code that widens this surface is out of scope.
 
 ## 3. STACK, LOCKED
 
-Next.js 15 App Router · TypeScript strict, no `any` · React 19 · Tailwind v4 · shadcn/ui · `@elevenlabs/react` (`useConversation`, never the embed widget) · Zod at every boundary · Supabase Postgres with RLS on every table · Drizzle ORM · Cal.com API v2 · Vitest unit · Playwright E2E · Vercel Hobby · pnpm.
+Next.js 15 App Router · TypeScript strict, no `any` · React 19 · Tailwind v4 · `@elevenlabs/react` (`useConversation`, never the embed widget) · Zod at every boundary · Supabase Postgres with RLS on every table · Drizzle ORM · Cal.com API v2 · Vitest unit · Playwright E2E · Vercel Hobby · pnpm.
+
+shadcn/ui was in this list until Phase 4 and is deviation 26. The brand tokens landed in `src/app/globals.css` as a Tailwind v4 `@theme` block in Phase 3, and `shadcn init` writes a competing `--background` / `--foreground` / `--primary` layer plus a `:root` and `.dark` block into that same file. The console needs a button and a text input, both of which the existing `ink` / `raise` / `line` / `body` / `faint` / `mint` vocabulary already renders. Carrying a second token system, plus `clsx`, `tailwind-merge`, `class-variance-authority` and Radix, to reach two controls is dependency weight with no return.
 
 ---
 

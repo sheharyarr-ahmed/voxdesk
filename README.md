@@ -12,7 +12,7 @@ Full breakdown in [SPEC.md](SPEC.md) section 2.
 
 ## Stack
 
-Next.js 15 App Router, TypeScript, React 19, Tailwind v4, shadcn/ui, Zod, Drizzle, Supabase Postgres, Cal.com API v2, Vitest, Playwright, Vercel.
+Next.js 15 App Router, TypeScript, React 19, Tailwind v4, Zod, Drizzle, Supabase Postgres, Cal.com API v2, Vitest, Playwright, Vercel.
 
 Voice by ElevenLabs.
 
