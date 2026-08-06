@@ -114,13 +114,27 @@ pnpm verify:all
 Typecheck, then the unit suite, then the copy check, then Playwright. Playwright builds
 the app itself with the mock flag, so this takes a couple of minutes and that is expected.
 
-**`pnpm verify:all` overwrites `.next` with a mock build.** Deployment goes through git and
-Vercel builds from source, so the mock can never reach production. Do not pair it with
-`vercel deploy --prebuilt`, which would ship whatever is in `.next`.
+**`pnpm verify:all` overwrites `.next` with a mock build.** `.next` is gitignored and is
+never uploaded, so the mock cannot reach production. Do not pair it with
+`vercel deploy --prebuilt`, which would ship whatever is sitting in `.next`.
 
 ```bash
-git push          # Vercel builds from source
+git push                    # source of truth, but does NOT trigger a build
+vercel deploy --prod --yes  # this is what deploys
 ```
+
+**This project has no git integration.** It was created with `vercel link` and every
+deployment in its history was made from the CLI. Pushing to `main` publishes the code and
+changes nothing that is running. Both commands are required, in that order.
+
+Two failure modes worth knowing, because both have happened:
+
+- **`ERR_PNPM_OUTDATED_LOCKFILE`.** Vercel installs with `--frozen-lockfile`, so editing a
+  version in `package.json` without running `pnpm install` fails the build. The log names
+  the offending specifier exactly.
+- **Polling the URL and seeing no change.** With no git integration there is nothing to
+  wait for. Check `vercel ls` for a deployment newer than the push before assuming the
+  build is slow.
 
 Then, on the deployment:
 
