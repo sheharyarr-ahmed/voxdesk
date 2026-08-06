@@ -31,8 +31,10 @@ curl -sS -X POST -H "xi-api-key: $ELEVENLABS_API_KEY" \
 index does not break the demo, it makes the demo prove nothing. The Phase 0 standard was
 that the document exists, and it was not enough.
 
-Retrieval can also be exercised directly, with no conversation created and no credits
-spent, which is the cheapest possible confidence check before a recording:
+Retrieval can also be exercised directly. This is the cheapest possible confidence check
+before a recording, and it is the one that distinguishes a live index from an expired one,
+because an expired index does not error and the agent still answers. **Measured at zero
+credits on 2026-08-06**, 1188 remaining before and after, and it creates no conversation:
 
 ```bash
 curl -sS -X POST -H "xi-api-key: $ELEVENLABS_API_KEY" \
