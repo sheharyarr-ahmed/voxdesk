@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp .env.example .env.local)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(curl -sS -o /dev/null -w 'status=%{http_code}\\\\n' -H 'x-vd-tool-secret: anything' \"https://voxdesk-seven.vercel.app/api/probe\")",
+      "Bash(curl -sS -o /dev/null -w 'status=%{http_code}\\\\n' \"https://voxdesk-seven.vercel.app/\")",
+      "Bash(git fetch *)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm exec *)",
+      "Bash(./scripts/check-copy.sh)",
+      "Bash(gh repo *)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/verify.sh",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}

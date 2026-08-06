@@ -102,16 +102,17 @@ above, or to a row in the not claimable table.
 |---|---|
 | 3, what it does | Claims 1, 2, 3, 4, 8 |
 | 5, portfolio artifact and the free tier | Not claimable, rows "Commercial or client deployment" and "Production scale" |
-| 9, the four connection points and the audio path | Claims 1, 9, and `docs/ARCHITECTURE.md` section 1 |
-| 11, the audio path is replaceable | `docs/TELEPHONY.md`, which claims a design property and nothing more |
-| 13, the adapter and the zero minute e2e suite | Claim 16 |
-| 17, evidence lives in the decision records | The pointers in every row above |
-| 19, proven by connecting | Claims 2, 5, 6, 7, 12, 20 |
-| 21, stated narrowly on purpose | Claims 17 and 18, quoted in the wording those rows require |
-| 23, no replay endpoint, and what that cost | Claim 20, and the reasoning in the Phase 3 and Phase 4 gate records |
-| 27, stack | Checked against `package.json` on 2026-08-06, every entry present. shadcn/ui was removed from this line and from SPEC.md section 3 in phase 4, deviation 26, because it was named in the contract and never installed |
-| 29, `Voice by ElevenLabs` | Attribution obligation |
-| 33, verification counts | Claim 16. The two counts are the actual suite sizes, not targets |
-| 37, deliberately not built | Not claimable table, and SPEC.md section 10 |
+| 7, live link, the gate, and the screenshots | Claim 11 for why it is gated. The screenshots are described in `docs/screenshots/README.md`, which states that eight are live production and two are the mock seam. **The passcode is never published**, because the gate is the quota defence |
+| 11, the four connection points and the audio path | Claims 1, 9, and `docs/ARCHITECTURE.md` section 1 |
+| 13, the audio path is replaceable | `docs/TELEPHONY.md`, which claims a design property and nothing more |
+| 15, the adapter and the zero minute e2e suite | Claim 16 |
+| 19, evidence lives in the decision records | The pointers in every row above |
+| 21, proven by connecting | Claims 2, 5, 6, 7, 12, 20 |
+| 23, stated narrowly on purpose | Claims 17 and 18, quoted in the wording those rows require |
+| 25, no replay endpoint, and what that cost | Claim 20, and the reasoning in the Phase 3 and Phase 4 gate records |
+| 29, stack | Checked against `package.json` on 2026-08-06, every entry present. shadcn/ui was removed from this line and from SPEC.md section 3 in phase 4, deviation 26, because it was named in the contract and never installed |
+| 31, `Voice by ElevenLabs` | Attribution obligation |
+| 35, verification counts | Claim 16. The two counts are the actual suite sizes, not targets |
+| 39, deliberately not built | Not claimable table, and SPEC.md section 10 |
 
 A line that cannot be pointed at a row is deleted, not softened.

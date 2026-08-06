@@ -4,6 +4,8 @@ A browser voice concierge. A visitor talks to a conversational agent, asks about
 
 **Portfolio artifact, not a commercial deployment.** It runs on the ElevenLabs free tier, which carries no commercial licence and caps the account at 15 agent minutes a month. Every claim below is traced to [docs/CLAIMS.md](docs/CLAIMS.md), and anything not in that file is not claimed.
 
+**Live at [voxdesk-seven.vercel.app](https://voxdesk-seven.vercel.app).** The demo is passcode gated, because voice minutes are metered and the gate is what stops open tabs draining the month. Ask for the passcode. [Screenshots of the running application](docs/screenshots/) are in the repository if you would rather just look.
+
 ## Architecture
 
 The speech loop runs on the ElevenLabs Agents platform. The browser connects to it directly over WebRTC, so this server is never in the audio path. It is reached at four defined points: session token minting, two synchronous tool webhooks during the call, and an HMAC signed post call ingest.
