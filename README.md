@@ -16,11 +16,11 @@ All SDK usage sits behind one adapter, so the whole console can be driven by a s
 
 The interesting part of this build is the evidence, not the feature list. Every result is written up in a decision record committed alongside the code, with the alternative that was considered and the reason it was rejected.
 
-Proven by connecting rather than by reading the code: a spoken call booked a real calendar event in 2 minutes 19 seconds; an unsigned webhook POST returns 401 with the row counts unchanged; a valid signature over a tampered body is rejected and writes nothing; ingest is idempotent across four identical signed deliveries; and an unauthenticated connection to the agent is refused at the application layer.
+Proven by connecting rather than by reading the code: a spoken call booked a real calendar event in 2 minutes 19 seconds; an unsigned webhook POST returns 401 with the row counts unchanged; a valid signature over a tampered body is rejected and writes nothing; ingest is idempotent across four identical signed deliveries; an unauthenticated connection to the agent is refused at the application layer; and a delivery signed by ElevenLabs, rather than by this repository, is accepted and persisted.
 
-Stated narrowly on purpose: retrieval demonstrably ran against the controlled document, which is not the same as every answer being grounded in a retrieved chunk. The console reports a browser observed tool round trip, which is a different span from the latency measured inside the route and shown in the call log.
+Stated narrowly on purpose: retrieval ran against the controlled document and the platform attributed one answer to a specific retrieved chunk, which is not the same as claiming every answer is grounded. The console reports a browser observed tool round trip, which is a different span from the latency measured inside the route and shown in the call log.
 
-Still open, and listed rather than glossed: the signing construction has only been checked against a signature this repository produced itself, because the platform exposes no replay or test delivery endpoint.
+Recorded because it was expensive to learn: the platform exposes no replay, resend or test delivery endpoint, so the signing construction could only ever be confirmed by a real call. Verifying against a signature you generated yourself proves the verifier and not the construction, and that gap was carried openly for two phases rather than papered over.
 
 ## Stack
 

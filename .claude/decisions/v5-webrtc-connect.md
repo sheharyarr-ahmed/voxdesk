@@ -1,10 +1,13 @@
 # V5 · WebRTC connects from the browser
 
-**Date:** 2026-08-02
-**Phase:** 0, verification sweep, SPEC.md §9
-**Verdict:** PARTIAL. Auth half proven, handshake deferred to Phase 2, mitigation adopted up front.
+**Date:** 2026-08-02, closed 2026-08-06
+**Phase:** 0, verification sweep, SPEC.md §9. Closed at the Phase 4 gate.
+**Verdict:** **PASS.** A token authorised WebRTC connect from our own bundle completed and
+carried a full conversation. No fallback taken, transport is `webrtc`.
 
-This one is not recorded as a pass. The honest state is written out below rather than rounded up.
+The original PARTIAL verdict and its reasoning are kept below unedited, because the
+scoping decision is the defensible part and rounding it up after the fact would erase it.
+The closing evidence is at the end.
 
 ## Question
 
@@ -63,3 +66,45 @@ Why the deferral is still small, unchanged from the original reasoning: a failur
 
 - The `livekit-client` 2.16.1 pin is measured rather than asserted, one resolved version reached directly and transitively, agreeing with `@elevenlabs/client@1.17.0`'s own dependency. From the Phase 1 gate record.
 - Server side tool execution does not depend on the client at all. A text simulation run entirely inside the ElevenLabs backend, with no browser anywhere, reached both of our deployed tool routes and created a real Cal.com booking. Recorded in `phase-2-tool-sequence-tuning.md`. This is what made the dashboard call safe to plan on, and it is also why a V5 failure would not touch the tool layer.
+
+---
+
+## Closed at the Phase 4 gate, 2026-08-06
+
+A session started from our own deployed console, through the SPEC.md §6.7 seam, with
+`@elevenlabs/react` 1.12.0 and `livekit-client` resolved to the pinned `2.16.1`.
+
+```
+conv_3901kzbgzjtner8vj1kx8hke7rzb   status done   29 s   3 messages   call_successful: success
+```
+
+Every element the corrected closing condition demanded is present. Our bundle, our pinned
+dependency, our adapter seam, a token minted by our own `POST /api/session` under
+`enable_auth: true`, and a conversation that carried real audio in both directions rather
+than a connection that merely opened.
+
+**Both halves of the residual risk are discharged at once.** The Phase 2 record left open
+whether a token authorised connect would actually work now that the agent refuses
+unauthenticated conversations. It does. The token was minted server side, the browser never
+saw the API key, and no agent id entered the client bundle, because the private WebRTC
+session config accepts `conversationToken` and declares `agentId?: never`.
+
+The mitigation adopted up front was never needed: the `2.16.1` pin held and no `/rtc/v1`
+404 appeared. Transport is `webrtc`, not the websocket fallback.
+
+### A correction to this record's own fallback claim
+
+This record said twice that a failure would be a one line edit inside
+`use-elevenlabs-session.ts`, either the pin or `connectionType: 'websocket'`. **The second
+of those is wrong**, and it is corrected here rather than left as a trap for a future
+session.
+
+Read out of the SDK types rather than recalled: `PrivateWebSocketSessionConfig` requires a
+`signedUrl` and declares `conversationToken?: never`. A conversation token cannot be used
+over the websocket transport at all. So with `enable_auth: true`, switching transports also
+requires `POST /api/session` to mint a signed URL from a different endpoint instead of a
+token. That is a two file change, not one line.
+
+The blast radius argument still holds, since both files are ours and neither is a route the
+agent calls. But the cost was understated, and that understatement is part of why closing
+this early rather than at recording time was worth 337 credits.

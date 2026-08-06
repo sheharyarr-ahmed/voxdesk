@@ -41,16 +41,19 @@ These are claimable **only** in the wording given. The limit is part of the clai
 
 | # | Claim, as it must be written | Why it is limited |
 |---|---|---|
-| 17 | "Retrieval demonstrably ran against the controlled document." Not "every answer was grounded in a retrieved chunk." | `rag_retrieval_info` returned real chunks and vector distances on 9 turns, but `used_chunk_ids` came back empty. That is a separate signal about attribution and is not read as more than it says. `phase-2-gate-summary.md` |
+| 17 | "Retrieval ran against the controlled document, and on the knowledge base turn of the 2026-08-06 call the platform attributed the answer to a specific retrieved chunk." Still not "every answer is grounded in a retrieved chunk." | Two calls. On 2026-08-05 retrieval fired on 9 turns with real chunk ids and distances, but `used_chunk_ids` came back empty. On 2026-08-06 it fired on the knowledge base turn at distance 0.117 and `used_chunk_ids` returned `["Mbjmvh8E0BxVhtFPjU9j"]`, the same chunk. Attribution is therefore observed, on one turn of one call, and the claim says exactly that and no more. `phase-4-gate-summary.md` |
 | 18 | "The console reports a browser observed tool round trip. The call log reports the latency measured inside our own route." | Two different spans. The SDK's `agent_tool_request` and `agent_tool_response` events carry no duration, so the console times the events it sees. Conflating the two would overstate what either number measures. |
-| 19 | See the signature construction row below. | |
+| 19 | "Roughly 213 credits per call plus about 256 a minute on this workspace." Not a published price. | Solved from two measured calls, 806 credits for 139 s and 337 for 29 s, and the model reproduces both exactly. It is our own observation of one free workspace, not a rate card. |
 
-### Open, and therefore not yet claimable
+### Closed at the Phase 4 gate, 2026-08-06
 
-| # | Item | Closes when |
+Both items that Phase 3 and Phase 2 deferred are now closed against live evidence.
+
+| # | Claim | Evidence |
 |---|---|---|
-| 20 | **The signing construction has not been confirmed against a payload ElevenLabs signed.** Signature verification is enforced and its failure modes are proven from outside, including a valid signature over a tampered body. The construction matches the documentation, V1's record and our own signer. It has only ever been checked against a signature we produced ourselves. | A live post call delivery lands and the conversation row moves to `completed` with no hand signed curl involved. There is no replay, resend or test endpoint on the ElevenLabs API, confirmed against the live OpenAPI document, so only a real call closes this. `phase-3-gate-summary.md` |
-| 21 | **V5, a token authorised WebRTC connect from our own bundle.** The token mint is proven and unauthenticated access is proven refused. The handshake from `@elevenlabs/react` inside our build has not been run. | A session started from the deployed console reaches `connected`. `v5-webrtc-connect.md` |
+| 20 | **The signing construction is confirmed against a payload ElevenLabs signed.** Signature verification is enforced, its failure modes are proven from outside including a valid signature over a tampered body, and a delivery signed by ElevenLabs is now proven to be accepted. | `conv_3901kzbgzjtner8vj1kx8hke7rzb` moved to `completed` with a 3 turn transcript with **no hand signed curl involved**, and the webhook's `most_recent_failure_error_code` stayed null across the delivery. Only `/api/webhooks/post-call` sets that status, and it verifies before touching the database, so the row is the proof. `phase-4-gate-summary.md` |
+| 21 | **V5 passes. A token authorised WebRTC connect from our own bundle carried a real conversation.** | Same call, 29 s, 3 messages, started from the deployed console through the section 6.7 seam with `livekit-client` at the pinned 2.16.1. No fallback taken, transport `webrtc`. `v5-webrtc-connect.md` |
+| 22 | The webhook creates the conversation row when no tool ran, as well as updating it when one did. | This call invoked no tools, so nothing existed for the webhook to update and it took the insert branch of the section 5.1 upsert. Phase 3 only ever exercised the update branch. |
 
 ---
 
@@ -99,9 +102,9 @@ above, or to a row in the not claimable table.
 | 11, the audio path is replaceable | `docs/TELEPHONY.md`, which claims a design property and nothing more |
 | 13, the adapter and the zero minute e2e suite | Claim 16 |
 | 17, evidence lives in the decision records | The pointers in every row above |
-| 19, proven by connecting | Claims 2, 5, 6, 7, 12 |
+| 19, proven by connecting | Claims 2, 5, 6, 7, 12, 20 |
 | 21, stated narrowly on purpose | Claims 17 and 18, quoted in the wording those rows require |
-| 23, still open | Claim 20 |
+| 23, no replay endpoint, and what that cost | Claim 20, and the reasoning in the Phase 3 and Phase 4 gate records |
 | 27, stack | Checked against `package.json` on 2026-08-06, every entry present. shadcn/ui was removed from this line and from SPEC.md section 3 in phase 4, deviation 26, because it was named in the contract and never installed |
 | 29, `Voice by ElevenLabs` | Attribution obligation |
 | 33, verification counts | Claim 16. The two counts are the actual suite sizes, not targets |
