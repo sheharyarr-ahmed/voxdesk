@@ -76,14 +76,18 @@ Both items that Phase 3 and Phase 2 deferred are now closed against live evidenc
 The ElevenLabs free plan grants no commercial rights and **requires attribution wherever
 its output is published.** This is a licence term, not a stylistic choice.
 
-It is discharged in three places, and the first is the one that matters because it cannot
-be forgotten:
+It is discharged in two places, and the first is the one that matters because it cannot be
+forgotten:
 
 1. **In the product.** `Voice by ElevenLabs` renders in the console footer and on the
    gate. Any screenshot or recording of this build carries the credit by construction.
    Asserted by two end to end tests so it cannot be removed silently.
 2. **In `README.md`**, in the stack section.
-3. **In the demo video**, as a visible credit.
+
+SPEC.md §12 originally named the demo video as a third carrier. The video was dropped in
+deviation 36 and the obligation was unaffected, because the credit had already been moved
+into the product. That is the argument for putting a licence term in the UI rather than in
+a caption: the caption can be cut, the footer travels with every image.
 
 ---
 

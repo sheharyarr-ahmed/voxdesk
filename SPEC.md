@@ -381,9 +381,11 @@ Build `src/lib/ingest.ts`, `/api/webhooks/post-call`, `/calls`, and `/calls/[id]
 
 ### Phase 4 · Frontend, docs, ship · 5 minutes
 
-`voice-console.tsx` on the brand system: true black, mint accent used once, Space Grotesk display with tight tracking, Space Mono labels. Mic permission, connecting, listening, agent speaking, and error states. Live transcript pane. Email fallback field. Playwright specs against the mock seam. `scripts/check-copy.sh`. README, `ARCHITECTURE.md`, `CLAIMS.md`, `TELEPHONY.md`, `DEPLOY_CHECKLIST.md`. Deploy. Then script and record the 60 to 90 second demo video.
+`voice-console.tsx` on the brand system: true black, mint accent used once, Space Grotesk display with tight tracking, Space Mono labels. Mic permission, connecting, listening, agent speaking, and error states. Live transcript pane. Email fallback field. Playwright specs against the mock seam. `scripts/check-copy.sh`. README, `ARCHITECTURE.md`, `CLAIMS.md`, `TELEPHONY.md`, `DEPLOY_CHECKLIST.md`. Deploy. Then capture the screenshots in `docs/screenshots/` from the deployed application.
 
-**Gate:** `pnpm verify:all` green, deployed, video recorded, every README claim traced line by line to `docs/CLAIMS.md`.
+**Gate:** `pnpm verify:all` green, deployed, captured evidence published, every README claim traced line by line to `docs/CLAIMS.md`.
+
+**Amended 2026-08-06, deviation 36. The demo video is dropped and replaced by screenshots captured from the deployed application.** The video was scheduled after the quota reset because 851 credits buys exactly one 90 second take with no retake. Screenshots cost zero credits, are captured by driving the real deployment with Playwright rather than by hand, and show the artifact a prospect actually inspects: the call log and the call detail page with its transcript beside both tool latencies and all six extracted lead fields. A video would have shown the same evidence more slowly and cost a metered call to produce. The attribution obligation in section 12 is unaffected, because the credit renders inside the product rather than in a caption.
 
 ### Phase 5 · Distribution · 0 minutes
 
@@ -492,7 +494,9 @@ One spoken call, on the deployed URL, behind the passcode, completing in under t
 
 **Not claimable under any framing:** building the speech pipeline, since ElevenLabs owns STT, the LLM, turn taking, and TTS; commercial or client deployment, since the free tier carries no commercial license; telephony or phone support; any usage metric, call volume, or conversion number; production scale, since this is production grade architecture scoped to demo scale and the minute cap is the honest reason.
 
-**Attribution obligation.** The ElevenLabs free plan grants no commercial rights and requires attribution wherever its output is published. The demo video carries a visible "Voice by ElevenLabs" credit, and the README states the same in the stack section. This is a licence term, not a stylistic choice, and it is checked at the Phase 4 gate alongside the CLAIMS.md pass.
+**Attribution obligation.** The ElevenLabs free plan grants no commercial rights and requires attribution wherever its output is published. A visible "Voice by ElevenLabs" credit renders inside the product, on `/gate` and in the console footer, and the README states the same in the stack section. This is a licence term, not a stylistic choice, and it is checked at the Phase 4 gate alongside the CLAIMS.md pass.
+
+Putting the credit in the product rather than in a caption is what makes it survive. Any screenshot or recording of the running application carries it by construction, so dropping the demo video in deviation 36 did not put the obligation at risk. Two end to end tests assert it so it cannot be removed silently.
 
 ---
 
